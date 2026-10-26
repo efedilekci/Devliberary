@@ -22,7 +22,7 @@ class DashboardController extends Controller
                 ->where('is_archived', false)
                 ->latest()
                 ->limit(30)
-                ->get(['id', 'title', 'url', 'created_at']),
+                ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite', 'created_at']),
         ]);
     }
 }

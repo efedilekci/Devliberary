@@ -1,11 +1,12 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import InputError from '@/components/input-error';
+import { ResourceList, type LibraryResource } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { dashboard } from '@/routes';
-import { store as storeCollection } from '@/routes/collections';
+import { show as showCollection, store as storeCollection } from '@/routes/collections';
 import { store as storeResource } from '@/routes/resources';
 
 type CollectionItem = {
@@ -16,11 +17,7 @@ type CollectionItem = {
     resources_count: number;
 };
 
-type ResourceItem = {
-    id: string;
-    title: string;
-    url: string;
-};
+type ResourceItem = LibraryResource;
 
 export default function Dashboard({
     collections,
@@ -137,8 +134,9 @@ export default function Dashboard({
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                             {collections.map((collection) => (
-                                <article
+                                <Link
                                     key={collection.id}
+                                    href={showCollection(collection.id)}
                                     className="rounded-xl border p-4"
                                     style={{
                                         borderTopColor: collection.accent_color,
@@ -152,7 +150,7 @@ export default function Dashboard({
                                             ? 'link'
                                             : 'links'}
                                     </p>
-                                </article>
+                                </Link>
                             ))}
                         </div>
                     )}
@@ -165,23 +163,7 @@ export default function Dashboard({
                             Nog geen links.
                         </p>
                     ) : (
-                        <ul className="divide-y rounded-xl border">
-                            {resources.map((resource) => (
-                                <li key={resource.id} className="px-4 py-3">
-                                    <a
-                                        href={resource.url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="font-medium hover:underline"
-                                    >
-                                        {resource.title}
-                                    </a>
-                                    <p className="text-muted-foreground truncate text-sm">
-                                        {resource.url}
-                                    </p>
-                                </li>
-                            ))}
-                        </ul>
+                        <ResourceList resources={resources} />
                     )}
                 </section>
             </div>

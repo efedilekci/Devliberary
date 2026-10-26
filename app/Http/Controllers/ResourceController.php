@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreResourceRequest;
+use App\Models\Resource;
 use App\Support\UrlNormalizer;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ResourceController extends Controller
@@ -36,5 +38,27 @@ class ResourceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link opgeslagen.']);
 
         return to_route('dashboard');
+    }
+
+    public function favorite(Request $request, Resource $resource): RedirectResponse
+    {
+        abort_unless($resource->user_id === $request->user()->id, 404);
+
+        $resource->update([
+            'is_favorite' => ! $resource->is_favorite,
+        ]);
+
+        return back();
+    }
+
+    public function destroy(Request $request, Resource $resource): RedirectResponse
+    {
+        abort_unless($resource->user_id === $request->user()->id, 404);
+
+        $resource->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Link verwijderd.']);
+
+        return back();
     }
 }
