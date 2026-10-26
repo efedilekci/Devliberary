@@ -15,6 +15,7 @@ class DashboardController extends Controller
         return Inertia::render('dashboard', [
             'collections' => $user->collections()
                 ->withCount('resources')
+                ->orderByDesc('is_pinned_to_home')
                 ->orderBy('position')
                 ->orderBy('name')
                 ->get(),

@@ -1,4 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
+import { ArrowDown, ArrowUp, FoldVertical, Pin, UnfoldVertical } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { ResourceList, type LibraryResource } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { dashboard } from '@/routes';
-import { show as showCollection, store as storeCollection } from '@/routes/collections';
+import {
+    collapse as collapseCollection,
+    move as moveCollection,
+    pin as pinCollection,
+    show as showCollection,
+    store as storeCollection,
+} from '@/routes/collections';
 import { store as storeResource } from '@/routes/resources';
 
 type CollectionItem = {
@@ -15,9 +22,103 @@ type CollectionItem = {
     description: string;
     accent_color: string;
     resources_count: number;
+    is_pinned_to_home: boolean;
+    is_collapsed: boolean;
 };
 
 type ResourceItem = LibraryResource;
+
+function CollectionCard({
+    collection,
+    index,
+    total,
+}: {
+    collection: CollectionItem;
+    index: number;
+    total: number;
+}) {
+    return (
+        <article
+            className="flex items-start justify-between gap-3 rounded-xl border p-4"
+            style={{
+                borderTopColor: collection.accent_color,
+                borderTopWidth: 3,
+            }}
+        >
+            <Link href={showCollection(collection.id)} className="min-w-0">
+                <h3 className="font-medium">{collection.name}</h3>
+                {!collection.is_collapsed && (
+                    <p className="text-muted-foreground mt-1 text-sm">
+                        {collection.resources_count}{' '}
+                        {collection.resources_count === 1 ? 'link' : 'links'}
+                    </p>
+                )}
+            </Link>
+            <div className="flex shrink-0 items-center">
+                <Form {...pinCollection.form(collection.id)}>
+                    <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={
+                            collection.is_pinned_to_home
+                                ? 'Losmaken van het dashboard'
+                                : 'Vastzetten op het dashboard'
+                        }
+                    >
+                        <Pin
+                            className={
+                                collection.is_pinned_to_home
+                                    ? 'fill-current'
+                                    : undefined
+                            }
+                        />
+                    </Button>
+                </Form>
+                <Form {...collapseCollection.form(collection.id)}>
+                    <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={
+                            collection.is_collapsed ? 'Uitklappen' : 'Inklappen'
+                        }
+                    >
+                        {collection.is_collapsed ? (
+                            <UnfoldVertical />
+                        ) : (
+                            <FoldVertical />
+                        )}
+                    </Button>
+                </Form>
+                <Form {...moveCollection.form(collection.id)}>
+                    <input type="hidden" name="direction" value="up" />
+                    <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Omhoog"
+                        disabled={index === 0}
+                    >
+                        <ArrowUp />
+                    </Button>
+                </Form>
+                <Form {...moveCollection.form(collection.id)}>
+                    <input type="hidden" name="direction" value="down" />
+                    <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Omlaag"
+                        disabled={index === total - 1}
+                    >
+                        <ArrowDown />
+                    </Button>
+                </Form>
+            </div>
+        </article>
+    );
+}
 
 export default function Dashboard({
     collections,
@@ -26,6 +127,15 @@ export default function Dashboard({
     collections: CollectionItem[];
     resources: ResourceItem[];
 }) {
+    const pinned = collections.filter((collection) => collection.is_pinned_to_home);
+    const unpinned = collections.filter(
+        (collection) => !collection.is_pinned_to_home,
+    );
+    const collectionOptions = [...collections].sort((a, b) =>
+        a.name.localeCompare(b.name, 'nl'),
+    );
+    const showGroupLabels = pinned.length > 0 && unpinned.length > 0;
+
     return (
         <>
             <Head title="Dashboard" />
@@ -73,7 +183,7 @@ export default function Dashboard({
                                             className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
                                         >
                                             <option value="">Geen collectie</option>
-                                            {collections.map((collection) => (
+                                            {collectionOptions.map((collection) => (
                                                 <option
                                                     key={collection.id}
                                                     value={collection.id}
@@ -132,26 +242,39 @@ export default function Dashboard({
                             Nog geen collecties.
                         </p>
                     ) : (
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                            {collections.map((collection) => (
-                                <Link
-                                    key={collection.id}
-                                    href={showCollection(collection.id)}
-                                    className="rounded-xl border p-4"
-                                    style={{
-                                        borderTopColor: collection.accent_color,
-                                        borderTopWidth: 3,
-                                    }}
-                                >
-                                    <h3 className="font-medium">{collection.name}</h3>
-                                    <p className="text-muted-foreground mt-1 text-sm">
-                                        {collection.resources_count}{' '}
-                                        {collection.resources_count === 1
-                                            ? 'link'
-                                            : 'links'}
-                                    </p>
-                                </Link>
-                            ))}
+                        <div className="grid gap-6">
+                            {pinned.length > 0 && (
+                                <div className="grid gap-3">
+                                    {showGroupLabels && (
+                                        <h3 className="text-muted-foreground text-sm">
+                                            Op het dashboard
+                                        </h3>
+                                    )}
+                                    {pinned.map((collection, index) => (
+                                        <CollectionCard
+                                            key={collection.id}
+                                            collection={collection}
+                                            index={index}
+                                            total={pinned.length}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                            {unpinned.length > 0 && (
+                                <div className="grid gap-3">
+                                    <h3 className="text-muted-foreground text-sm">
+                                        Niet op het dashboard
+                                    </h3>
+                                    {unpinned.map((collection, index) => (
+                                        <CollectionCard
+                                            key={collection.id}
+                                            collection={collection}
+                                            index={index}
+                                            total={unpinned.length}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </section>
