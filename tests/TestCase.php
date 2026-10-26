@@ -2,11 +2,21 @@
 
 namespace Tests;
 
+use App\Support\LinkMetadataFetcher;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Laravel\Fortify\Features;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->app->instance(LinkMetadataFetcher::class, new LinkMetadataFetcher(
+            static fn (string $host): array => [],
+        ));
+    }
+
     protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void
     {
         if (! Features::enabled($feature)) {

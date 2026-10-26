@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreResourceRequest;
 use App\Models\Resource;
+use App\Support\LinkMetadata;
+use App\Support\LinkMetadataFetcher;
 use App\Support\UrlNormalizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Throwable;
 
 class ResourceController extends Controller
 {
@@ -16,16 +19,20 @@ class ResourceController extends Controller
         $user = $request->user();
         $normalized = UrlNormalizer::normalize($request->string('url')->toString());
         $title = trim($request->string('title')->toString());
+        $metadata = $this->metadata($normalized);
 
         if ($title === '') {
             $host = parse_url($normalized, PHP_URL_HOST);
-            $title = is_string($host) && $host !== '' ? $host : $normalized;
+            $title = $metadata->title !== ''
+                ? $metadata->title
+                : (is_string($host) && $host !== '' ? $host : $normalized);
         }
 
         $resource = $user->resources()->create([
             'url' => $request->string('url')->toString(),
             'title' => mb_substr($title, 0, 200),
             'description' => '',
+            'favicon_url' => $metadata->faviconUrl,
             'notes' => '',
             'tags' => [],
         ]);
@@ -60,5 +67,14 @@ class ResourceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link verwijderd.']);
 
         return back();
+    }
+
+    private function metadata(string $url): LinkMetadata
+    {
+        try {
+            return app(LinkMetadataFetcher::class)->fetch($url);
+        } catch (Throwable) {
+            return new LinkMetadata;
+        }
     }
 }
