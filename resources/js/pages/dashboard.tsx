@@ -8,7 +8,7 @@ export default function Dashboard() {
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <div className="rounded-xl border border-sidebar-border/70 border-dashed p-8 text-center dark:border-sidebar-border">
                     <p className="text-muted-foreground text-sm">
-                        Devliberary workspace — hier komen straks je
+                        Devliberary workspace. Hier komen straks je
                         collecties, links en meer.
                     </p>
                 </div>

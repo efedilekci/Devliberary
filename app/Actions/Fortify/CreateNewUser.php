@@ -31,7 +31,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'password' => $input['password'],
             'role' => UserRole::User,
-            'approval_status' => ApprovalStatus::Pending,
+            'approval_status' => ApprovalStatus::Approved,
             'session_version' => 1,
         ]);
     }
