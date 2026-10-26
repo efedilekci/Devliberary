@@ -1,0 +1,88 @@
+<?php
+
+namespace Tests\Feature\Library;
+
+use App\Models\Collection;
+use App\Models\Resource;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class DashboardLibraryTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_a_user_can_save_a_link_and_see_it_on_the_dashboard(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('resources.store'), [
+            'url' => 'laravel.com/docs',
+            'title' => 'Laravel docs',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertDatabaseHas('resources', [
+            'user_id' => $user->id,
+            'title' => 'Laravel docs',
+            'normalized_url' => 'https://laravel.com/docs',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Laravel docs');
+    }
+
+    public function test_a_duplicate_link_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        Resource::factory()->for($user)->create([
+            'url' => 'https://laravel.com/docs',
+        ]);
+
+        $response = $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
+            'url' => 'https://laravel.com/docs/',
+            'title' => 'Nog een keer',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $response->assertSessionHasErrors('url');
+        $this->assertSame(1, Resource::query()->count());
+    }
+
+    public function test_a_user_can_create_a_collection_and_put_a_link_in_it(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('collections.store'), [
+            'name' => 'Laravel',
+        ])->assertRedirect(route('dashboard'));
+
+        $collection = Collection::query()->where('user_id', $user->id)->firstOrFail();
+
+        $this->actingAs($user)->post(route('resources.store'), [
+            'url' => 'https://laravel.com',
+            'title' => 'Laravel',
+            'collection_id' => $collection->id,
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertTrue($collection->resources()->where('title', 'Laravel')->exists());
+    }
+
+    public function test_a_user_cannot_file_a_link_in_someone_elses_collection(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $collection = Collection::factory()->for($other)->create();
+
+        $response = $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
+            'url' => 'https://example.com',
+            'title' => 'Example',
+            'collection_id' => $collection->id,
+        ]);
+
+        $response->assertSessionHasErrors('collection_id');
+        $this->assertSame(0, Resource::query()->count());
+    }
+}
