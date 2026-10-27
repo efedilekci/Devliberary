@@ -1,6 +1,7 @@
 import { Form, usePage } from '@inertiajs/react';
 import { Archive, ArchiveRestore, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { CollectionChecks } from '@/components/collection-checks';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -44,6 +45,7 @@ export type LibraryResource = {
     is_archived: boolean;
     show_on_home?: boolean;
     collection_id?: string | null;
+    collection_ids?: string[];
 };
 
 function hostLabel(url: string): string {
@@ -153,15 +155,21 @@ export function EditLinkButton({
         tags?: string[];
         show_on_home?: boolean;
         collection_id?: string | null;
+        collection_ids?: string[];
     };
     collectionId?: string | null;
     className?: string;
 }) {
     const collections = usePage().props.libraryNav?.collections ?? [];
-    const selected =
-        collectionId !== undefined ? collectionId : (resource.collection_id ?? null);
+    const selectedIds =
+        resource.collection_ids !== undefined
+            ? resource.collection_ids
+            : collectionId
+              ? [collectionId]
+              : resource.collection_id
+                ? [resource.collection_id]
+                : [];
     const [open, setOpen] = useState(false);
-    const options = [...collections].sort((a, b) => a.name.localeCompare(b.name, 'nl'));
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -179,10 +187,10 @@ export function EditLinkButton({
             <DialogContent>
                 <DialogTitle>Link bewerken</DialogTitle>
                 <DialogDescription>
-                    Pas de titel, het adres, de tags of de collectie aan.
+                    Pas de titel, het adres, de tags of de collecties aan.
                 </DialogDescription>
                 <Form
-                    key={`${resource.id}-${resource.title}-${resource.url}-${selected ?? ''}-${(resource.tags ?? []).join(',')}-${resource.show_on_home ? '1' : '0'}`}
+                    key={`${resource.id}-${resource.title}-${resource.url}-${selectedIds.join(',')}-${(resource.tags ?? []).join(',')}-${resource.show_on_home ? '1' : '0'}`}
                     {...update.form(resource.id)}
                     disableWhileProcessing
                     onSuccess={() => setOpen(false)}
@@ -229,23 +237,12 @@ export function EditLinkButton({
                                 </p>
                                 <InputError message={errors.tags} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor={`collection-${resource.id}`}>Collectie</Label>
-                                <select
-                                    id={`collection-${resource.id}`}
-                                    name="collection_id"
-                                    defaultValue={selected ?? ''}
-                                    className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-                                >
-                                    <option value="">Geen collectie</option>
-                                    {options.map((collection) => (
-                                        <option key={collection.id} value={collection.id}>
-                                            {collection.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.collection_id} />
-                            </div>
+                            <CollectionChecks
+                                collections={collections}
+                                selectedIds={selectedIds}
+                                idPrefix={`link-${resource.id}`}
+                                error={errors.collection_ids ?? errors['collection_ids.0']}
+                            />
                             <div className="flex items-center gap-2">
                                 <input type="hidden" name="show_on_home" value="0" />
                                 <input

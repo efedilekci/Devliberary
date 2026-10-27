@@ -13,6 +13,23 @@ use Illuminate\Validation\Validator;
 
 class StoreResourceRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if (! $this->exists('collection_ids')) {
+            return;
+        }
+
+        $raw = $this->input('collection_ids');
+
+        $this->merge([
+            'collection_ids' => collect(is_array($raw) ? $raw : [$raw])
+                ->filter(fn (mixed $id): bool => is_string($id) && $id !== '')
+                ->unique()
+                ->values()
+                ->all(),
+        ]);
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -35,6 +52,11 @@ class StoreResourceRequest extends FormRequest
             }],
             'collection_id' => [
                 'nullable',
+                'uuid',
+                Rule::exists(Collection::class, 'id')->where('user_id', $this->user()->id),
+            ],
+            'collection_ids' => ['sometimes', 'array'],
+            'collection_ids.*' => [
                 'uuid',
                 Rule::exists(Collection::class, 'id')->where('user_id', $this->user()->id),
             ],

@@ -56,6 +56,7 @@ class DashboardController extends Controller
                     'show_on_home' => $resource->show_on_home,
                     'created_at' => $resource->created_at,
                     'collection_id' => $resource->collections->first()?->id,
+                    'collection_ids' => $resource->collections->pluck('id')->values(),
                 ])
                 ->values(),
         ]);

@@ -18,6 +18,7 @@ class CollectionBoard
             ->withCount(['resources' => fn ($query) => $query->where('resources.is_archived', false)])
             ->with(['resources' => function ($query): void {
                 $query->where('resources.is_archived', false)
+                    ->with('collections:id')
                     ->orderByPivot('position')
                     ->orderBy('resources.title');
             }])
@@ -43,6 +44,7 @@ class CollectionBoard
                         'is_favorite' => $resource->is_favorite,
                         'show_on_home' => $resource->show_on_home,
                         'tags' => $resource->tags,
+                        'collection_ids' => $resource->collections->pluck('id')->values(),
                     ])->values(),
                 ];
             })

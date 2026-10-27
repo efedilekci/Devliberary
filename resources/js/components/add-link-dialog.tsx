@@ -1,5 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import { CollectionChecks } from '@/components/collection-checks';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,9 +42,6 @@ export function AddLinkDialog({
     onOpenChange: (open: boolean) => void;
     collectionId: string | null;
 }) {
-    const collectionOptions = [...collections].sort((a, b) =>
-        a.name.localeCompare(b.name, 'nl'),
-    );
     const [url, setUrl] = useState('');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -250,23 +248,12 @@ export function AddLinkDialog({
                                 </p>
                                 <InputError message={errors.tags} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="collection_id">Collectie</Label>
-                                <select
-                                    id="collection_id"
-                                    name="collection_id"
-                                    defaultValue={collectionId ?? ''}
-                                    className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-                                >
-                                    <option value="">Geen collectie</option>
-                                    {collectionOptions.map((collection) => (
-                                        <option key={collection.id} value={collection.id}>
-                                            {collection.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.collection_id} />
-                            </div>
+                            <CollectionChecks
+                                collections={collections}
+                                selectedIds={collectionId ? [collectionId] : []}
+                                idPrefix="new-link-collection"
+                                error={errors.collection_ids ?? errors['collection_ids.0']}
+                            />
                             <div className="flex items-center gap-2">
                                 <input type="hidden" name="show_on_home" value="0" />
                                 <input

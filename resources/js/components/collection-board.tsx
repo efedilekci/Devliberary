@@ -48,6 +48,7 @@ export type CollectionLink = {
     is_favorite: boolean;
     show_on_home: boolean;
     tags?: string[];
+    collection_ids?: string[];
 };
 
 export type EditableCollection = {

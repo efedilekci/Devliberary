@@ -49,6 +49,41 @@ class ResourceUpdateTest extends TestCase
                 ->where('resources.0.collection_id', $to->id));
     }
 
+    public function test_a_link_can_sit_in_more_than_one_collection(): void
+    {
+        $user = User::factory()->create();
+        $first = Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        $second = Collection::factory()->for($user)->create(['name' => 'PHP']);
+        $resource = Resource::factory()->for($user)->create([
+            'url' => 'https://laravel.com/docs',
+            'title' => 'Docs',
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('dashboard'))
+            ->patch(route('resources.update', $resource), [
+                'url' => 'https://laravel.com/docs',
+                'title' => 'Docs',
+                'collection_ids' => [$first->id, $second->id],
+            ])
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($first->resources()->whereKey($resource->id)->exists());
+        $this->assertTrue($second->resources()->whereKey($resource->id)->exists());
+
+        $this->actingAs($user)
+            ->patch(route('resources.update', $resource), [
+                'url' => 'https://laravel.com/docs',
+                'title' => 'Docs',
+                'collection_ids' => [$second->id],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertFalse($first->resources()->whereKey($resource->id)->exists());
+        $this->assertTrue($second->resources()->whereKey($resource->id)->exists());
+    }
+
     public function test_clearing_the_collection_removes_the_link_from_it(): void
     {
         $user = User::factory()->create();

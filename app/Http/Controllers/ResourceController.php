@@ -51,10 +51,7 @@ class ResourceController extends Controller
                 : true,
         ]);
 
-        if ($request->filled('collection_id')) {
-            $collection = $user->collections()->findOrFail($request->string('collection_id')->toString());
-            $collection->attachResource($resource);
-        }
+        $this->placeInCollections($resource, $request, false);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link opgeslagen.']);
 
@@ -120,16 +117,53 @@ class ResourceController extends Controller
         }
 
         $resource->update($attributes);
-        $resource->collections()->detach();
-
-        if ($request->filled('collection_id')) {
-            $collection = $request->user()->collections()->findOrFail($request->string('collection_id')->toString());
-            $collection->attachResource($resource);
-        }
+        $this->placeInCollections($resource, $request, true);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link bijgewerkt.']);
 
         return back();
+    }
+
+    private function placeInCollections(Resource $resource, Request $request, bool $replace): void
+    {
+        $user = $request->user();
+
+        if ($request->exists('collection_ids')) {
+            $ids = collect($request->input('collection_ids'))
+                ->filter(fn (mixed $id): bool => is_string($id) && $id !== '')
+                ->unique()
+                ->values();
+            $current = $resource->collections()->pluck('collections.id');
+
+            $remove = $current->diff($ids);
+            if ($remove->isNotEmpty()) {
+                $resource->collections()->detach($remove->all());
+            }
+
+            $owned = $user->collections()->whereIn('id', $ids->diff($current))->get()->keyBy('id');
+
+            foreach ($ids->diff($current) as $id) {
+                $collection = $owned->get($id);
+
+                if ($collection === null) {
+                    continue;
+                }
+
+                $max = $collection->resources()->max('collection_resource.position');
+                $collection->attachResource($resource, $max === null ? 0 : ((int) $max) + 1);
+            }
+
+            return;
+        }
+
+        if ($replace) {
+            $resource->collections()->detach();
+        }
+
+        if ($request->filled('collection_id')) {
+            $collection = $user->collections()->findOrFail($request->string('collection_id')->toString());
+            $collection->attachResource($resource);
+        }
     }
 
     public function favorite(Request $request, Resource $resource): RedirectResponse

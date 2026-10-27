@@ -23,9 +23,20 @@ class UpdateResourceRequest extends FormRequest
             404,
         );
 
-        $this->merge([
+        $attributes = [
             'title' => trim($this->string('title')->toString()),
-        ]);
+        ];
+
+        if ($this->exists('collection_ids')) {
+            $raw = $this->input('collection_ids');
+            $attributes['collection_ids'] = collect(is_array($raw) ? $raw : [$raw])
+                ->filter(fn (mixed $id): bool => is_string($id) && $id !== '')
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        $this->merge($attributes);
     }
 
     /**
@@ -49,6 +60,11 @@ class UpdateResourceRequest extends FormRequest
             }],
             'collection_id' => [
                 'nullable',
+                'uuid',
+                Rule::exists(Collection::class, 'id')->where('user_id', $this->user()->id),
+            ],
+            'collection_ids' => ['sometimes', 'array'],
+            'collection_ids.*' => [
                 'uuid',
                 Rule::exists(Collection::class, 'id')->where('user_id', $this->user()->id),
             ],

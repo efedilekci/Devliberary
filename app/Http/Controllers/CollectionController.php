@@ -90,6 +90,7 @@ class CollectionController extends Controller
             'collection' => $collection->only(['id', 'name', 'description', 'icon', 'accent_color', 'is_pinned_to_home']),
             'resources' => $collection->resources()
                 ->where('resources.is_archived', false)
+                ->with('collections:id')
                 ->orderByPivot('position')
                 ->get(['resources.id', 'resources.title', 'resources.url', 'resources.description', 'resources.favicon_url', 'resources.preview_image_url', 'resources.is_favorite', 'resources.is_archived', 'resources.show_on_home', 'resources.tags'])
                 ->map(fn (Resource $resource) => [
@@ -103,7 +104,8 @@ class CollectionController extends Controller
                     'is_favorite' => $resource->is_favorite,
                     'is_archived' => $resource->is_archived,
                     'show_on_home' => $resource->show_on_home,
-                    'collection_id' => $collection->id,
+                    'collection_id' => $resource->collections->first()?->id,
+                    'collection_ids' => $resource->collections->pluck('id')->values(),
                 ])
                 ->values(),
         ]);
