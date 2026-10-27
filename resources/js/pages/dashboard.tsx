@@ -2,7 +2,7 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowDown, ArrowUp, FoldVertical, FolderPlus, Pin, Plus, UnfoldVertical } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { ResourceList, type LibraryResource } from '@/components/resource-list';
+import { LinkViewToggle, ResourceList, type LibraryResource } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { useLinkView } from '@/hooks/use-link-view';
 import { dashboard } from '@/routes';
 import {
     collapse as collapseCollection,
@@ -295,6 +296,7 @@ export default function Dashboard({
         (collection) => !collection.is_pinned_to_home,
     );
     const showGroupLabels = pinned.length > 0 && unpinned.length > 0;
+    const [linkView, setLinkView] = useLinkView();
 
     return (
         <>
@@ -352,7 +354,8 @@ export default function Dashboard({
                 <section className="grid gap-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <h2 className="text-sm font-medium">Links</h2>
-                        <div className="flex gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex gap-3">
                             {(
                                 [
                                     ['active', 'Alles', dashboard()],
@@ -387,6 +390,8 @@ export default function Dashboard({
                                     {label}
                                 </Link>
                             ))}
+                            </div>
+                            <LinkViewToggle view={linkView} onChange={setLinkView} />
                         </div>
                     </div>
                     {resources.length === 0 ? (
@@ -398,7 +403,7 @@ export default function Dashboard({
                                   : 'Nog geen links.'}
                         </p>
                     ) : (
-                        <ResourceList resources={resources} />
+                        <ResourceList resources={resources} view={linkView} />
                     )}
                 </section>
             </div>

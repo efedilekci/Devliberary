@@ -1,8 +1,10 @@
 import { Head } from '@inertiajs/react';
 import {
+    LinkViewToggle,
     ResourceList,
     type LibraryResource,
 } from '@/components/resource-list';
+import { useLinkView } from '@/hooks/use-link-view';
 import { dashboard } from '@/routes';
 
 type CollectionItem = {
@@ -19,6 +21,8 @@ export default function CollectionShow({
     collection: CollectionItem;
     resources: LibraryResource[];
 }) {
+    const [linkView, setLinkView] = useLinkView();
+
     return (
         <>
             <Head title={collection.name} />
@@ -42,7 +46,12 @@ export default function CollectionShow({
                         Nog geen links in deze collectie.
                     </p>
                 ) : (
-                    <ResourceList resources={resources} />
+                    <section className="grid gap-3">
+                        <div className="flex justify-end">
+                            <LinkViewToggle view={linkView} onChange={setLinkView} />
+                        </div>
+                        <ResourceList resources={resources} view={linkView} />
+                    </section>
                 )}
             </div>
         </>
