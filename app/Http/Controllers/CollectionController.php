@@ -66,6 +66,22 @@ class CollectionController extends Controller
         return back();
     }
 
+    public function destroy(Request $request, Collection $collection): RedirectResponse
+    {
+        abort_unless($collection->user_id === $request->user()->id, 404);
+
+        $onShow = $this->cameFromShow($collection);
+        $collection->delete();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Collectie verwijderd.']);
+
+        if ($onShow) {
+            return redirect()->route('collections.index');
+        }
+
+        return back();
+    }
+
     public function show(Request $request, Collection $collection): Response
     {
         abort_unless($collection->user_id === $request->user()->id, 404);
@@ -156,5 +172,13 @@ class CollectionController extends Controller
         }
 
         return back();
+    }
+
+    private function cameFromShow(Collection $collection): bool
+    {
+        $previous = parse_url(url()->previous(), PHP_URL_PATH);
+        $show = parse_url(route('collections.show', $collection), PHP_URL_PATH);
+
+        return is_string($previous) && is_string($show) && rtrim($previous, '/') === rtrim($show, '/');
     }
 }

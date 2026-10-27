@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { CollectionGlyph } from '@/components/collection-appearance';
-import { CollectionDialog } from '@/components/collection-board';
+import { CollectionDialog, DeleteCollectionDialog } from '@/components/collection-board';
 import {
     LinkViewToggle,
     ResourceList,
@@ -30,6 +30,7 @@ export default function CollectionShow({
 }) {
     const [linkView, setLinkView] = useLinkView();
     const [editOpen, setEditOpen] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     return (
         <>
@@ -51,19 +52,34 @@ export default function CollectionShow({
                             />
                             <span className="truncate">{collection.name}</span>
                         </h1>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditOpen(true)}
-                        >
-                            Bewerken
-                        </Button>
+                        <div className="flex shrink-0 items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditOpen(true)}
+                            >
+                                Bewerken
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setDeleteOpen(true)}
+                            >
+                                Verwijderen
+                            </Button>
+                        </div>
                     </div>
                     <CollectionDialog
                         open={editOpen}
                         collection={collection}
                         onOpenChange={setEditOpen}
+                    />
+                    <DeleteCollectionDialog
+                        open={deleteOpen}
+                        collection={collection}
+                        onOpenChange={setDeleteOpen}
                     />
                     {collection.description !== '' && (
                         <p className="text-muted-foreground mt-1 text-sm">

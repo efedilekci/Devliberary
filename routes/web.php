@@ -22,6 +22,7 @@ Route::middleware(['auth', 'session.version'])->group(function () {
     Route::get('collections', [CollectionController::class, 'index'])->name('collections.index');
     Route::post('collections', [CollectionController::class, 'store'])->name('collections.store');
     Route::patch('collections/{collection}', [CollectionController::class, 'update'])->name('collections.update');
+    Route::delete('collections/{collection}', [CollectionController::class, 'destroy'])->name('collections.destroy');
     Route::patch('collections/{collection}/pin', [CollectionController::class, 'pin'])->name('collections.pin');
     Route::patch('collections/{collection}/collapse', [CollectionController::class, 'collapse'])->name('collections.collapse');
     Route::patch('collections/{collection}/move', [CollectionController::class, 'move'])->name('collections.move');

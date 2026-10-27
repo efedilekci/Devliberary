@@ -3,6 +3,7 @@
 namespace Tests\Feature\Library;
 
 use App\Models\Collection;
+use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -137,6 +138,49 @@ class CollectionOrganizeTest extends TestCase
 
         $this->assertSame('Notities', $collection->fresh()->name);
         $this->assertTrue($collection->fresh()->is_pinned_to_home);
+    }
+
+    public function test_deleting_a_collection_keeps_the_links(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create(['name' => 'Tijdelijk']);
+        $resource = Resource::factory()->for($user)->create(['title' => 'Bewaard']);
+        $collection->attachResource($resource);
+
+        $this->actingAs($user)
+            ->from(route('dashboard'))
+            ->delete(route('collections.destroy', $collection))
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertModelMissing($collection);
+        $this->assertModelExists($resource);
+        $this->assertFalse($resource->collections()->exists());
+    }
+
+    public function test_deleting_from_the_collection_page_returns_to_the_overview(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->from(route('collections.show', $collection))
+            ->delete(route('collections.destroy', $collection))
+            ->assertRedirect(route('collections.index'));
+
+        $this->assertModelMissing($collection);
+    }
+
+    public function test_another_user_cannot_delete_a_collection(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $collection = Collection::factory()->for($owner)->create(['name' => 'Notities']);
+
+        $this->actingAs($other)
+            ->delete(route('collections.destroy', $collection))
+            ->assertNotFound();
+
+        $this->assertModelExists($collection);
     }
 
     public function test_another_user_cannot_organize_a_collection(): void

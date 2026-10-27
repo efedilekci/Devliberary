@@ -23,6 +23,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import {
     collapse as collapseCollection,
+    destroy as destroyCollection,
     move as moveCollection,
     pin as pinCollection,
     show as showCollection,
@@ -75,12 +77,14 @@ function CollectionCard({
     total,
     onAddLink,
     onEdit,
+    onDelete,
 }: {
     collection: CollectionItem;
     index: number;
     total: number;
     onAddLink: (collectionId: string) => void;
     onEdit: (collection: CollectionItem) => void;
+    onDelete: (collection: CollectionItem) => void;
 }) {
     const hidden = Math.max(collection.resources_count - collection.links.length, 0);
 
@@ -153,6 +157,13 @@ function CollectionCard({
                                     </button>
                                 </DropdownMenuItem>
                             </Form>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                variant="destructive"
+                                onSelect={() => onDelete(collection)}
+                            >
+                                Verwijderen
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -333,6 +344,52 @@ export function CollectionDialog({
     );
 }
 
+export function DeleteCollectionDialog({
+    open,
+    onOpenChange,
+    collection,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    collection: { id: string; name: string } | null;
+}) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Collectie verwijderen?</DialogTitle>
+                    <DialogDescription>
+                        {collection === null
+                            ? 'De links blijven in je bibliotheek.'
+                            : `${collection.name} verdwijnt. De links blijven in je bibliotheek.`}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                            Annuleren
+                        </Button>
+                    </DialogClose>
+                    {collection !== null && (
+                        <Form
+                            {...destroyCollection.form(collection.id)}
+                            disableWhileProcessing
+                            onSuccess={() => onOpenChange(false)}
+                        >
+                            {({ processing }) => (
+                                <Button type="submit" variant="destructive" disabled={processing}>
+                                    {processing && <Spinner />}
+                                    Verwijderen
+                                </Button>
+                            )}
+                        </Form>
+                    )}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function linkLabel(count: number): string {
     return `${count} ${count === 1 ? 'link' : 'links'}`;
 }
@@ -366,6 +423,7 @@ export function CollectionBoard({
     const [linkCollectionId, setLinkCollectionId] = useState<string | null>(null);
     const [collectionOpen, setCollectionOpen] = useState(false);
     const [editing, setEditing] = useState<CollectionItem | null>(null);
+    const [deleting, setDeleting] = useState<CollectionItem | null>(null);
     const needle = onHome ? '' : filter.trim().toLocaleLowerCase('nl');
     const pool = onHome
         ? collections.filter((collection) => collection.is_pinned_to_home)
@@ -419,6 +477,15 @@ export function CollectionBoard({
                     }
                 }}
             />
+            <DeleteCollectionDialog
+                open={deleting !== null}
+                collection={deleting}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setDeleting(null);
+                    }
+                }}
+            />
             {onHome && visible.length === 0 && (
                 <p className="text-muted-foreground text-sm">Nog geen collecties op home.</p>
             )}
@@ -451,6 +518,7 @@ export function CollectionBoard({
                                     setEditing(item);
                                     setCollectionOpen(true);
                                 }}
+                                onDelete={setDeleting}
                             />
                         );
                     })}
