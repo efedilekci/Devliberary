@@ -134,4 +134,39 @@ class CollectionPageTest extends TestCase
 
         $this->assertNotNull($resource->fresh());
     }
+
+    public function test_a_collection_can_be_sorted_without_changing_the_manual_order(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        $php = Resource::factory()->for($user)->create([
+            'title' => 'PHP',
+            'created_at' => '2026-10-27 10:00:00',
+        ]);
+        $docs = Resource::factory()->for($user)->create([
+            'title' => 'Laravel docs',
+            'created_at' => '2026-10-27 12:00:00',
+        ]);
+        $collection->attachResource($php, 0);
+        $collection->attachResource($docs, 1);
+
+        $this->actingAs($user)
+            ->get(route('collections.show', $collection))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sort', 'position')
+                ->where('resources.0.title', 'PHP')
+                ->where('resources.1.title', 'Laravel docs'));
+
+        $this->actingAs($user)
+            ->get(route('collections.show', ['collection' => $collection, 'sort' => 'title']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sort', 'title')
+                ->where('resources.0.title', 'Laravel docs')
+                ->where('resources.1.title', 'PHP'));
+
+        $this->assertSame(0, (int) $collection->resources()->whereKey($php->id)->first()->pivot->position);
+        $this->assertSame(1, (int) $collection->resources()->whereKey($docs->id)->first()->pivot->position);
+    }
 }

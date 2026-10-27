@@ -543,6 +543,31 @@ function ResourceActions({
     );
 }
 
+export function LinkSortSelect({
+    value,
+    options,
+    onChange,
+}: {
+    value: string;
+    options: Array<{ value: string; label: string }>;
+    onChange: (value: string) => void;
+}) {
+    return (
+        <select
+            aria-label="Sorteren"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+        >
+            {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    );
+}
+
 export function LinkViewToggle({
     view,
     onChange,

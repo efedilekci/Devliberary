@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Resource;
 use App\Support\CollectionBoard;
+use App\Support\LinkOrder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -20,26 +21,21 @@ class DashboardController extends Controller
             $linkFilter = 'active';
         }
 
+        $sort = LinkOrder::forList($request->string('sort')->toString(), $linkFilter === 'recent');
         $resources = $user->resources();
 
         if ($linkFilter === 'recent') {
-            $resources
-                ->where('is_archived', false)
-                ->whereNotNull('last_opened_at')
-                ->orderByDesc('last_opened_at');
+            $resources->where('is_archived', false)->whereNotNull('last_opened_at');
+        } elseif ($linkFilter === 'favorites') {
+            $resources->where('is_archived', false)->where('is_favorite', true);
+        } elseif ($linkFilter === 'archived') {
+            $resources->where('is_archived', true);
         } else {
-            $resources->latest();
-
-            if ($linkFilter === 'favorites') {
-                $resources->where('is_archived', false)->where('is_favorite', true);
-            } elseif ($linkFilter === 'archived') {
-                $resources->where('is_archived', true);
-            } else {
-                $resources->where('is_archived', false);
-            }
+            $resources->where('is_archived', false);
         }
 
         $resources->search($search);
+        LinkOrder::apply($resources->getQuery(), $sort);
 
         $board = CollectionBoard::forUser($user);
 
@@ -48,6 +44,7 @@ class DashboardController extends Controller
             'uncollected' => $board['uncollected'],
             'linkFilter' => $linkFilter,
             'search' => $search,
+            'sort' => $sort,
             'resources' => $resources
                 ->with('collections:id')
                 ->limit(30)

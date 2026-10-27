@@ -1,8 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { CollectionGlyph } from '@/components/collection-appearance';
 import { CollectionDialog, DeleteCollectionDialog } from '@/components/collection-board';
 import {
+    LinkSortSelect,
     LinkViewToggle,
     ResourceList,
     type LibraryResource,
@@ -10,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useLinkView } from '@/hooks/use-link-view';
 import { dashboard } from '@/routes';
-import { index as collectionsIndex } from '@/routes/collections';
+import { index as collectionsIndex, show as showCollection } from '@/routes/collections';
 
 type CollectionItem = {
     id: string;
@@ -21,16 +22,42 @@ type CollectionItem = {
     is_pinned_to_home: boolean;
 };
 
+const collectionSorts = [
+    { value: 'position', label: 'Handmatig' },
+    { value: 'newest', label: 'Nieuwste' },
+    { value: 'oldest', label: 'Oudste' },
+    { value: 'title', label: 'Titel' },
+];
+
 export default function CollectionShow({
     collection,
     resources,
     search,
+    sort,
 }: {
     collection: CollectionItem;
     resources: LibraryResource[];
     search: string;
+    sort: 'position' | 'newest' | 'oldest' | 'title';
 }) {
     const [linkView, setLinkView] = useLinkView();
+
+    function changeSort(next: string): void {
+        const params: Record<string, string> = {};
+
+        if (search !== '') {
+            params.q = search;
+        }
+
+        if (next !== 'position') {
+            params.sort = next;
+        }
+
+        router.get(showCollection.url(collection.id), params, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -90,7 +117,8 @@ export default function CollectionShow({
                     )}
                 </div>
                 {resources.length > 0 && (
-                    <div className="flex justify-end">
+                    <div className="flex justify-end gap-2">
+                        <LinkSortSelect value={sort} options={collectionSorts} onChange={changeSort} />
                         <LinkViewToggle view={linkView} onChange={setLinkView} />
                     </div>
                 )}
@@ -106,7 +134,7 @@ export default function CollectionShow({
                         view={linkView}
                         collectionId={collection.id}
                         collectionName={collection.name}
-                        reorder={search === ''}
+                        reorder={search === '' && sort === 'position'}
                     />
                 )}
             </div>

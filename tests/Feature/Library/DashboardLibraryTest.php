@@ -328,4 +328,40 @@ class DashboardLibraryTest extends TestCase
                 ->where('search', '%')
                 ->has('resources', 0));
     }
+
+    public function test_links_can_be_sorted_by_title_or_age(): void
+    {
+        $user = User::factory()->create();
+        Resource::factory()->for($user)->create([
+            'title' => 'PHP',
+            'created_at' => '2026-10-27 12:00:00',
+        ]);
+        Resource::factory()->for($user)->create([
+            'title' => 'Laravel docs',
+            'created_at' => '2026-10-27 10:00:00',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['links' => 'all', 'sort' => 'title']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sort', 'title')
+                ->where('resources.0.title', 'Laravel docs')
+                ->where('resources.1.title', 'PHP'));
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['links' => 'all', 'sort' => 'oldest']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sort', 'oldest')
+                ->where('resources.0.title', 'Laravel docs')
+                ->where('resources.1.title', 'PHP'));
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['links' => 'all', 'sort' => 'nope']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sort', 'newest')
+                ->where('resources.0.title', 'PHP'));
+    }
 }

@@ -1,10 +1,10 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import {
     CollectionBoard,
     type CollectionItem,
     type CollectionLink,
 } from '@/components/collection-board';
-import { LinkViewToggle, ResourceList, type LibraryResource } from '@/components/resource-list';
+import { LinkSortSelect, LinkViewToggle, ResourceList, type LibraryResource } from '@/components/resource-list';
 import { useLinkView } from '@/hooks/use-link-view';
 import { dashboard } from '@/routes';
 
@@ -16,14 +16,48 @@ export default function Dashboard({
     resources,
     linkFilter,
     search,
+    sort,
 }: {
     collections: CollectionItem[];
     uncollected: CollectionLink[];
     resources: ResourceItem[];
     linkFilter: 'active' | 'all' | 'favorites' | 'archived' | 'recent';
     search: string;
+    sort: 'newest' | 'oldest' | 'title' | 'opened';
 }) {
     const [linkView, setLinkView] = useLinkView();
+    const sortOptions =
+        linkFilter === 'recent'
+            ? [
+                  { value: 'opened', label: 'Geopend' },
+                  { value: 'newest', label: 'Nieuwste' },
+                  { value: 'oldest', label: 'Oudste' },
+                  { value: 'title', label: 'Titel' },
+              ]
+            : [
+                  { value: 'newest', label: 'Nieuwste' },
+                  { value: 'oldest', label: 'Oudste' },
+                  { value: 'title', label: 'Titel' },
+              ];
+
+    function changeSort(next: string): void {
+        const params: Record<string, string> = {};
+        const defaultSort = linkFilter === 'recent' ? 'opened' : 'newest';
+
+        if (linkFilter !== 'active') {
+            params.links = linkFilter;
+        }
+
+        if (search !== '') {
+            params.q = search;
+        }
+
+        if (next !== defaultSort) {
+            params.sort = next;
+        }
+
+        router.get(dashboard.url(), params, { preserveScroll: true, preserveState: true });
+    }
     const pageTitle =
         search !== ''
             ? 'Zoekresultaten'
@@ -48,7 +82,8 @@ export default function Dashboard({
                 />
                 ) : (
                     <>
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-2">
+                            <LinkSortSelect value={sort} options={sortOptions} onChange={changeSort} />
                             <LinkViewToggle view={linkView} onChange={setLinkView} />
                         </div>
                         <section className="grid gap-3">

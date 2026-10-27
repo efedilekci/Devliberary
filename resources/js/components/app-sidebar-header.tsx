@@ -23,6 +23,16 @@ function collectionIdFromUrl(url: string): string | null {
     return match ? match[1] : null;
 }
 
+function sortFromUrl(url: string): string | null {
+    const sort = new URLSearchParams(url.split('?')[1] ?? '').get('sort');
+
+    if (sort === 'newest' || sort === 'oldest' || sort === 'title' || sort === 'opened') {
+        return sort;
+    }
+
+    return null;
+}
+
 function linkFilterFromUrl(url: string): string | null {
     const [path, query = ''] = url.split('?');
 
@@ -56,12 +66,20 @@ export function AppSidebarHeader({
         const value = new FormData(event.currentTarget).get('q');
         const term = typeof value === 'string' ? value.trim() : '';
 
+        const sort = sortFromUrl(url);
+
         if (linkCollectionId) {
-            router.get(
-                showCollection.url(linkCollectionId),
-                term === '' ? {} : { q: term },
-                { preserveScroll: true },
-            );
+            const params: Record<string, string> = {};
+
+            if (sort !== null && sort !== 'opened') {
+                params.sort = sort;
+            }
+
+            if (term !== '') {
+                params.q = term;
+            }
+
+            router.get(showCollection.url(linkCollectionId), params, { preserveScroll: true });
 
             return;
         }
@@ -71,6 +89,10 @@ export function AppSidebarHeader({
 
         if (links !== null) {
             params.links = links;
+        }
+
+        if (sort !== null && (links === 'recent' || sort !== 'opened')) {
+            params.sort = sort;
         }
 
         if (term !== '') {

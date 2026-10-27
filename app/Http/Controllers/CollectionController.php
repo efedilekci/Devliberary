@@ -7,6 +7,7 @@ use App\Models\Collection;
 use App\Models\Resource;
 use App\Support\CollectionAppearance;
 use App\Support\CollectionBoard;
+use App\Support\LinkOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -87,16 +88,23 @@ class CollectionController extends Controller
         abort_unless($collection->user_id === $request->user()->id, 404);
 
         $search = mb_substr(trim($request->string('q')->toString()), 0, 200);
+        $sort = LinkOrder::forCollection($request->string('sort')->toString());
         $resources = $collection->resources()
             ->where('resources.is_archived', false)
-            ->with('collections:id')
-            ->orderByPivot('position')
-            ->orderBy('resources.title');
+            ->with('collections:id');
         $resources->search($search);
+
+        if ($sort === 'position') {
+            $resources->orderBy('resources.title');
+        } else {
+            $resources->reorder();
+            LinkOrder::apply($resources->getQuery(), $sort, 'resources');
+        }
 
         return Inertia::render('collections/show', [
             'collection' => $collection->only(['id', 'name', 'description', 'icon', 'accent_color', 'is_pinned_to_home']),
             'search' => $search,
+            'sort' => $sort,
             'resources' => $resources
                 ->get(['resources.id', 'resources.title', 'resources.url', 'resources.description', 'resources.favicon_url', 'resources.preview_image_url', 'resources.is_favorite', 'resources.is_archived', 'resources.show_on_home', 'resources.tags'])
                 ->map(fn (Resource $resource) => [
