@@ -7,5 +7,7 @@ readonly class LinkMetadata
     public function __construct(
         public string $title = '',
         public string $faviconUrl = '',
+        public string $description = '',
+        public string $previewImageUrl = '',
     ) {}
 }

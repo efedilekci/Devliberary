@@ -36,11 +36,41 @@ export type LibraryResource = {
     id: string;
     title: string;
     url: string;
+    description?: string;
     favicon_url: string;
+    preview_image_url?: string;
     is_favorite: boolean;
     is_archived: boolean;
     collection_id?: string | null;
 };
+
+function hostLabel(url: string): string {
+    try {
+        const host = new URL(url.includes('://') ? url : `https://${url}`).hostname;
+
+        return host.replace(/^www\./, '');
+    } catch {
+        return url;
+    }
+}
+
+function ResourcePreview({ url }: { url: string }) {
+    const [failed, setFailed] = useState(false);
+
+    if (url === '' || failed) {
+        return <div className="bg-muted h-36 w-full" />;
+    }
+
+    return (
+        <img
+            src={url}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="h-36 w-full object-cover"
+            onError={() => setFailed(true)}
+        />
+    );
+}
 
 export function ResourceMark({ url }: { url: string }) {
     const [failed, setFailed] = useState(false);
@@ -78,6 +108,9 @@ function ResourceBody({ resource }: { resource: LibraryResource }) {
                 {resource.title}
             </a>
             <p className="text-muted-foreground truncate text-sm">{resource.url}</p>
+            {resource.description ? (
+                <p className="text-muted-foreground line-clamp-1 text-sm">{resource.description}</p>
+            ) : null}
         </div>
     );
 }
@@ -424,19 +457,43 @@ export function ResourceList({
                     {resources.map((resource) => (
                         <li
                             key={resource.id}
-                            className="flex flex-col gap-3 rounded-xl border p-4"
+                            className="flex flex-col overflow-hidden rounded-xl border"
                         >
-                            <div className="flex min-w-0 items-start gap-3">
-                                <Checkbox
-                                    checked={selected.includes(resource.id)}
-                                    onCheckedChange={() => toggle(resource.id)}
-                                    aria-label={`Selecteer ${resource.title}`}
-                                    className="mt-1"
-                                />
-                                <ResourceMark url={resource.favicon_url} />
-                                <ResourceBody resource={resource} />
+                            <ResourcePreview url={resource.preview_image_url ?? ''} />
+                            <div className="flex flex-1 flex-col gap-3 p-4">
+                                <div className="flex min-w-0 items-start gap-3">
+                                    <Checkbox
+                                        checked={selected.includes(resource.id)}
+                                        onCheckedChange={() => toggle(resource.id)}
+                                        aria-label={`Selecteer ${resource.title}`}
+                                        className="mt-1"
+                                    />
+                                    <div className="min-w-0">
+                                        <a
+                                            href={resource.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="font-medium hover:underline"
+                                        >
+                                            {resource.title}
+                                        </a>
+                                        {resource.description ? (
+                                            <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
+                                                {resource.description}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                </div>
+                                <div className="mt-auto flex items-center justify-between gap-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <ResourceMark url={resource.favicon_url} />
+                                        <span className="text-muted-foreground truncate text-xs">
+                                            {hostLabel(resource.url)}
+                                        </span>
+                                    </div>
+                                    <ResourceActions resource={resource} />
+                                </div>
                             </div>
-                            <ResourceActions resource={resource} />
                         </li>
                     ))}
                 </ul>

@@ -355,10 +355,23 @@ class LinkMetadataFetcher
 
         $body = $this->asUtf8($body, $this->headerValue($response, 'Content-Type'));
         $head = substr($body, 0, 262144);
+        $title = $this->title($head);
+
+        if ($title === '') {
+            $title = mb_substr($this->metaContent($head, ['og:title', 'twitter:title']), 0, 200);
+        }
+
+        $description = $this->metaContent($head, ['og:description', 'twitter:description']);
+
+        if ($description === '') {
+            $description = $this->metaContent($head, ['description']);
+        }
 
         return new LinkMetadata(
-            title: $this->title($head),
+            title: $title,
             faviconUrl: $this->favicon($head, $target) ?? $favicon,
+            description: mb_substr($description, 0, 500),
+            previewImageUrl: $this->preview($head, $target),
         );
     }
 
@@ -408,6 +421,68 @@ class LinkMetadataFetcher
         $title = preg_replace('/\s+/u', ' ', $title) ?? '';
 
         return trim(mb_substr($title, 0, 200));
+    }
+
+    /**
+     * @param  list<string>  $names
+     */
+    private function metaContent(string $html, array $names): string
+    {
+        if (preg_match_all('/<meta\b[^>]*>/i', $html, $tags) < 1) {
+            return '';
+        }
+
+        foreach (array_slice($tags[0], 0, 80) as $tag) {
+            if (preg_match('/\b(?:property|name|itemprop)\s*=\s*(["\'])(.*?)\1/i', $tag, $name) !== 1) {
+                continue;
+            }
+
+            $key = strtolower(html_entity_decode($name[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+
+            if (! in_array($key, $names, true)) {
+                continue;
+            }
+
+            if (preg_match('/\bcontent\s*=\s*(["\'])(.*?)\1/is', $tag, $content) !== 1) {
+                continue;
+            }
+
+            $value = html_entity_decode($content[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $value = strip_tags($value);
+            $value = str_replace("\0", '', $value);
+            $value = preg_replace('/\s+/u', ' ', $value) ?? '';
+            $value = trim($value);
+
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @param  array{url: string, origin: string, host: string, port: int, ip: string}  $target
+     */
+    private function preview(string $html, array $target): string
+    {
+        foreach (['og:image', 'og:image:url', 'twitter:image'] as $name) {
+            $value = $this->metaContent($html, [$name]);
+
+            if ($value === '') {
+                continue;
+            }
+
+            $absolute = $this->absolute($value, $target['url']);
+
+            if ($absolute === null || strlen($absolute) > 2048 || $this->target($absolute) === null) {
+                continue;
+            }
+
+            return $absolute;
+        }
+
+        return '';
     }
 
     /**

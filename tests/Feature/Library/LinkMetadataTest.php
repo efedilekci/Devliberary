@@ -14,17 +14,19 @@ class LinkMetadataTest extends TestCase
 
     public function test_a_saved_link_keeps_the_page_title_and_favicon(): void
     {
-        $this->fakePublicPage('<title>Gids</title><link rel="icon" href="/icon.png">');
+        $this->fakePublicPage('<title>Gids</title><link rel="icon" href="/icon.png"><meta property="og:description" content="Korte uitleg."><meta property="og:image" content="https://example.com/cover.jpg">');
         $user = User::factory()->create();
 
-        $this->actingAs($user)->post(route('resources.store'), [
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
             'url' => 'https://example.com/guide',
         ])->assertRedirect(route('dashboard'));
 
         $this->assertDatabaseHas('resources', [
             'user_id' => $user->id,
             'title' => 'Gids',
+            'description' => 'Korte uitleg.',
             'favicon_url' => 'https://example.com/icon.png',
+            'preview_image_url' => 'https://example.com/cover.jpg',
         ]);
 
         $this->actingAs($user)
@@ -39,7 +41,7 @@ class LinkMetadataTest extends TestCase
         $this->fakePublicPage('<title>Paginatitel</title><link rel="shortcut icon" href="https://cdn.example/icon.png">');
         $user = User::factory()->create();
 
-        $this->actingAs($user)->post(route('resources.store'), [
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
             'url' => 'https://example.com/guide',
             'title' => 'Mijn titel',
         ])->assertRedirect(route('dashboard'));
@@ -56,7 +58,7 @@ class LinkMetadataTest extends TestCase
         Http::fake();
         $user = User::factory()->create();
 
-        $this->actingAs($user)->post(route('resources.store'), [
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
             'url' => 'http://127.0.0.1/admin',
             'title' => 'Lokaal',
         ])->assertRedirect(route('dashboard'));
@@ -65,7 +67,9 @@ class LinkMetadataTest extends TestCase
         $this->assertDatabaseHas('resources', [
             'user_id' => $user->id,
             'title' => 'Lokaal',
+            'description' => '',
             'favicon_url' => '',
+            'preview_image_url' => '',
         ]);
     }
 

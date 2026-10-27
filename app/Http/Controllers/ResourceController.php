@@ -34,8 +34,9 @@ class ResourceController extends Controller
         $resource = $user->resources()->create([
             'url' => $request->string('url')->toString(),
             'title' => mb_substr($title, 0, 200),
-            'description' => '',
+            'description' => $metadata->description,
             'favicon_url' => $metadata->faviconUrl,
+            'preview_image_url' => $metadata->previewImageUrl,
             'notes' => '',
             'tags' => [],
         ]);
@@ -47,7 +48,7 @@ class ResourceController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link opgeslagen.']);
 
-        return to_route('dashboard');
+        return back();
     }
 
     public function update(UpdateResourceRequest $request, Resource $resource): RedirectResponse
@@ -58,8 +59,22 @@ class ResourceController extends Controller
             'title' => mb_substr($request->string('title')->toString(), 0, 200),
         ];
 
-        if ($normalized !== $resource->normalized_url) {
-            $attributes['favicon_url'] = $this->metadata($normalized)->faviconUrl;
+        $missingPreview = $resource->description === '' && $resource->preview_image_url === '';
+
+        if ($normalized !== $resource->normalized_url || $missingPreview) {
+            $metadata = $this->metadata($normalized);
+
+            if ($normalized !== $resource->normalized_url || $resource->favicon_url === '') {
+                $attributes['favicon_url'] = $metadata->faviconUrl;
+            }
+
+            if ($normalized !== $resource->normalized_url || $resource->description === '') {
+                $attributes['description'] = $metadata->description;
+            }
+
+            if ($normalized !== $resource->normalized_url || $resource->preview_image_url === '') {
+                $attributes['preview_image_url'] = $metadata->previewImageUrl;
+            }
         }
 
         $resource->update($attributes);

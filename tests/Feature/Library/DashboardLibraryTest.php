@@ -17,7 +17,7 @@ class DashboardLibraryTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('resources.store'), [
+        $response = $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
             'url' => 'laravel.com/docs',
             'title' => 'Laravel docs',
         ]);
@@ -62,7 +62,7 @@ class DashboardLibraryTest extends TestCase
 
         $collection = Collection::query()->where('user_id', $user->id)->firstOrFail();
 
-        $this->actingAs($user)->post(route('resources.store'), [
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
             'url' => 'https://laravel.com',
             'title' => 'Laravel',
             'collection_id' => $collection->id,

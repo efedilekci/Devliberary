@@ -85,6 +85,38 @@ class LinkMetadataFetcherTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_it_reads_a_description_and_preview_image(): void
+    {
+        Http::fake([
+            'https://example.com/guide' => Http::response(
+                '<title>Gids</title><meta property="og:description" content="Een korte &amp; duidelijke gids."><meta property="og:image" content="/cover.jpg">',
+                200,
+                ['Content-Type' => 'text/html'],
+            ),
+        ]);
+
+        $metadata = $this->fetcher()->fetch('https://example.com/guide');
+
+        $this->assertSame('Een korte & duidelijke gids.', $metadata->description);
+        $this->assertSame('https://example.com/cover.jpg', $metadata->previewImageUrl);
+    }
+
+    public function test_it_ignores_a_preview_image_that_points_at_a_private_address(): void
+    {
+        Http::fake([
+            'https://example.com/guide' => Http::response(
+                '<title>Gids</title><meta property="og:image" content="http://127.0.0.1/secret.png"><meta name="twitter:image" content="https://example.com/cover.png">',
+                200,
+                ['Content-Type' => 'text/html'],
+            ),
+        ]);
+
+        $metadata = $this->fetcher()->fetch('https://example.com/guide');
+
+        $this->assertSame('', $metadata->description);
+        $this->assertSame('https://example.com/cover.png', $metadata->previewImageUrl);
+    }
+
     /**
      * @param  (callable(string): list<string>)|null  $resolver
      */

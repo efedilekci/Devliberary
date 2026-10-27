@@ -26,6 +26,24 @@ class CollectionPageTest extends TestCase
             ->assertSee('Documentatie');
     }
 
+    public function test_a_link_saved_from_a_collection_stays_in_that_collection(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create(['name' => 'Design']);
+
+        $this->actingAs($user)
+            ->from(route('collections.show', $collection))
+            ->post(route('resources.store'), [
+                'url' => 'https://example.com',
+                'title' => 'Voorbeeld',
+                'collection_id' => $collection->id,
+            ])
+            ->assertRedirect(route('collections.show', $collection))
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($collection->resources()->where('title', 'Voorbeeld')->exists());
+    }
+
     public function test_another_user_cannot_open_the_collection(): void
     {
         $owner = User::factory()->create();
