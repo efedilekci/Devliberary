@@ -5,7 +5,9 @@ namespace Tests\Feature\Library;
 use App\Models\Collection;
 use App\Models\Resource;
 use App\Models\User;
+use App\Support\LinkMetadataFetcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -104,6 +106,48 @@ class ResourceUpdateTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $this->assertFalse($collection->resources()->whereKey($resource->id)->exists());
+    }
+
+    public function test_a_written_description_stays_when_the_address_changes(): void
+    {
+        Http::fake([
+            'https://example.com/*' => Http::response(
+                '<meta property="og:description" content="Van de pagina">',
+                200,
+                ['Content-Type' => 'text/html'],
+            ),
+        ]);
+        $this->app->instance(LinkMetadataFetcher::class, new LinkMetadataFetcher(
+            static fn (string $host): array => ['93.184.216.34'],
+        ));
+
+        $user = User::factory()->create();
+        $resource = Resource::factory()->for($user)->create([
+            'url' => 'https://laravel.com/docs',
+            'title' => 'Docs',
+            'description' => 'Oud',
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('resources.update', $resource), [
+                'url' => 'https://example.com/nieuw',
+                'title' => 'Docs',
+                'description' => '  Zelf geschreven  ',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('Zelf geschreven', $resource->refresh()->description);
+
+        $this->actingAs($user)
+            ->patch(route('resources.update', $resource), [
+                'url' => 'https://example.com/anders',
+                'title' => 'Docs',
+                'description' => '',
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('Van de pagina', $resource->refresh()->description);
     }
 
     public function test_a_duplicate_url_and_a_blank_title_are_rejected(): void

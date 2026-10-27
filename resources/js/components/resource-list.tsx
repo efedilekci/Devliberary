@@ -232,6 +232,7 @@ export function EditLinkButton({
         id: string;
         title: string;
         url: string;
+        description?: string;
         tags?: string[];
         show_on_home?: boolean;
         collection_id?: string | null;
@@ -264,13 +265,13 @@ export function EditLinkButton({
                     <Pencil />
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[85vh] overflow-y-auto">
                 <DialogTitle>Link bewerken</DialogTitle>
                 <DialogDescription>
-                    Pas de titel, het adres, de tags of de collecties aan.
+                    Pas de titel, de beschrijving, het adres, de tags of de collecties aan.
                 </DialogDescription>
                 <Form
-                    key={`${resource.id}-${resource.title}-${resource.url}-${selectedIds.join(',')}-${(resource.tags ?? []).join(',')}-${resource.show_on_home ? '1' : '0'}`}
+                    key={`${resource.id}-${resource.title}-${resource.url}-${resource.description ?? ''}-${selectedIds.join(',')}-${(resource.tags ?? []).join(',')}-${resource.show_on_home ? '1' : '0'}`}
                     {...update.form(resource.id)}
                     disableWhileProcessing
                     onSuccess={() => setOpen(false)}
@@ -301,6 +302,18 @@ export function EditLinkButton({
                                     autoComplete="off"
                                 />
                                 <InputError message={errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor={`description-${resource.id}`}>Beschrijving</Label>
+                                <textarea
+                                    id={`description-${resource.id}`}
+                                    name="description"
+                                    rows={3}
+                                    defaultValue={resource.description ?? ''}
+                                    placeholder="Optioneel"
+                                    className="border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                                />
+                                <InputError message={errors.description} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor={`tags-${resource.id}`}>Tags</Label>

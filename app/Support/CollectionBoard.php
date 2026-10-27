@@ -40,6 +40,7 @@ class CollectionBoard
                         'id' => $resource->id,
                         'title' => $resource->title,
                         'url' => $resource->url,
+                        'description' => $resource->description,
                         'favicon_url' => $resource->favicon_url,
                         'is_favorite' => $resource->is_favorite,
                         'show_on_home' => $resource->show_on_home,
@@ -55,7 +56,7 @@ class CollectionBoard
             ->whereDoesntHave('collections')
             ->latest()
             ->limit(30)
-            ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite', 'show_on_home', 'tags']);
+            ->get(['id', 'title', 'url', 'description', 'favicon_url', 'is_favorite', 'show_on_home', 'tags']);
 
         return [
             'collections' => $collections,

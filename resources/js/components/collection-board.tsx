@@ -46,6 +46,7 @@ export type CollectionLink = {
     id: string;
     title: string;
     url: string;
+    description?: string;
     favicon_url: string;
     is_favorite: boolean;
     show_on_home: boolean;

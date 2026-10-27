@@ -113,11 +113,18 @@ class ResourceController extends Controller
     public function update(UpdateResourceRequest $request, Resource $resource): RedirectResponse
     {
         $normalized = UrlNormalizer::normalize($request->string('url')->toString());
+        $description = $request->exists('description')
+            ? mb_substr(trim($request->string('description')->toString()), 0, 500)
+            : null;
         $attributes = [
             'url' => $request->string('url')->toString(),
             'title' => mb_substr($request->string('title')->toString(), 0, 200),
             'tags' => TagList::parse($request->string('tags')->toString()),
         ];
+
+        if ($description !== null) {
+            $attributes['description'] = $description;
+        }
 
         if ($request->exists('show_on_home')) {
             $attributes['show_on_home'] = $request->boolean('show_on_home');
@@ -132,8 +139,10 @@ class ResourceController extends Controller
                 $attributes['favicon_url'] = $metadata->faviconUrl;
             }
 
-            if ($normalized !== $resource->normalized_url || $resource->description === '') {
-                $attributes['description'] = $metadata->description;
+            if ($description === null || $description === '') {
+                if ($normalized !== $resource->normalized_url || $resource->description === '') {
+                    $attributes['description'] = $metadata->description;
+                }
             }
 
             if ($normalized !== $resource->normalized_url || $resource->preview_image_url === '') {
