@@ -56,7 +56,7 @@ class DashboardLibraryTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->post(route('collections.store'), [
+        $this->actingAs($user)->from(route('dashboard'))->post(route('collections.store'), [
             'name' => 'Laravel',
         ])->assertRedirect(route('dashboard'));
 

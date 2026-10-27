@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Archive, Code, Folder, Layers, LayoutGrid, Star } from 'lucide-react';
+import { Archive, Code, Folder, Folders, Layers, LayoutGrid, Star } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,11 +14,15 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { show as showCollection } from '@/routes/collections';
+import { index as collectionsIndex, show as showCollection } from '@/routes/collections';
 import { index as snippets } from '@/routes/snippets';
 import type { NavItem } from '@/types';
 
 const footerNavItems: NavItem[] = [];
+
+function isCollectionsIndex(url: string): boolean {
+    return url.split('?')[0] === '/collections';
+}
 
 function linkFilter(url: string): 'active' | 'all' | 'favorites' | 'archived' | null {
     const [path, query = ''] = url.split('?');
@@ -61,6 +65,12 @@ export function AppSidebar() {
             icon: Star,
             isActive: filter === 'favorites',
             badge: libraryNav?.favoriteCount,
+        },
+        {
+            title: 'Collecties',
+            href: collectionsIndex(),
+            icon: Folders,
+            isActive: isCollectionsIndex(url),
         },
         {
             title: 'Archief',

@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useLinkView } from '@/hooks/use-link-view';
 import { dashboard } from '@/routes';
+import { index as collectionsIndex } from '@/routes/collections';
 
 type CollectionItem = {
     id: string;
@@ -81,8 +82,8 @@ CollectionShow.layout = {
             href: dashboard(),
         },
         {
-            title: 'Collectie',
-            href: dashboard(),
+            title: 'Collecties',
+            href: collectionsIndex(),
         },
     ],
 };

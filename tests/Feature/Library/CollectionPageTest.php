@@ -6,11 +6,30 @@ use App\Models\Collection;
 use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class CollectionPageTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_the_collections_page_shows_the_owners_boards(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        Collection::factory()->for($other)->create(['name' => 'Geheim']);
+
+        $this->get(route('collections.index'))->assertRedirect(route('login'));
+
+        $this->actingAs($user)
+            ->get(route('collections.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('collections/index')
+                ->has('collections', 1)
+                ->where('collections.0.name', 'Laravel'));
+    }
 
     public function test_the_owner_can_open_a_collection_with_its_links(): void
     {

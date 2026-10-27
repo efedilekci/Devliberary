@@ -73,24 +73,28 @@ function ResourcePreview({ url }: { url: string }) {
     );
 }
 
-export function ResourceMark({ url }: { url: string }) {
+export function ResourceMark({ url, compact = false }: { url: string; compact?: boolean }) {
     const [failed, setFailed] = useState(false);
+    const box = compact ? 'size-5 rounded-sm' : 'size-8 rounded-md';
+    const icon = compact ? 'size-3' : 'size-4';
 
     if (url === '' || failed) {
         return (
-            <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-md">
-                <Link2 className="size-4" />
+            <span
+                className={`bg-muted text-muted-foreground flex shrink-0 items-center justify-center ${box}`}
+            >
+                <Link2 className={icon} />
             </span>
         );
     }
 
     return (
-        <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-md">
+        <span className={`bg-muted flex shrink-0 items-center justify-center ${box}`}>
             <img
                 src={url}
                 alt=""
                 referrerPolicy="no-referrer"
-                className="size-4"
+                className={icon}
                 onError={() => setFailed(true)}
             />
         </span>

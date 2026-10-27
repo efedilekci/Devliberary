@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Models\Collection;
 use App\Models\Resource;
+use App\Support\CollectionBoard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,6 +13,11 @@ use Inertia\Response;
 
 class CollectionController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        return Inertia::render('collections/index', CollectionBoard::forUser($request->user()));
+    }
+
     public function store(StoreCollectionRequest $request): RedirectResponse
     {
         $user = $request->user();
@@ -25,7 +31,7 @@ class CollectionController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Collectie aangemaakt.']);
 
-        return to_route('dashboard');
+        return back();
     }
 
     public function show(Request $request, Collection $collection): Response
