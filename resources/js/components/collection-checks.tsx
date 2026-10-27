@@ -6,11 +6,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 export function CollectionChecks({
     collections,
     selectedIds,
+    lockedIds = [],
     idPrefix,
     error,
 }: {
     collections: Array<{ id: string; name: string }>;
     selectedIds: string[];
+    lockedIds?: string[];
     idPrefix: string;
     error?: string;
 }) {
@@ -38,6 +40,10 @@ export function CollectionChecks({
     }, [open]);
 
     function toggle(id: string): void {
+        if (lockedIds.includes(id)) {
+            return;
+        }
+
         setSelected((current) =>
             current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
         );
@@ -92,6 +98,7 @@ export function CollectionChecks({
                         >
                             {options.map((collection) => {
                                 const checked = selected.includes(collection.id);
+                                const locked = lockedIds.includes(collection.id);
 
                                 return (
                                     <button
@@ -99,7 +106,11 @@ export function CollectionChecks({
                                         type="button"
                                         role="option"
                                         aria-selected={checked}
-                                        className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
+                                        aria-disabled={locked}
+                                        className={cn(
+                                            'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
+                                            locked ? 'cursor-default' : 'hover:bg-accent',
+                                        )}
                                         onClick={() => toggle(collection.id)}
                                     >
                                         <span className="flex-1 truncate">{collection.name}</span>

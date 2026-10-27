@@ -23,6 +23,12 @@ class ResourceController extends Controller
     {
         $user = $request->user();
         $normalized = UrlNormalizer::normalize($request->string('url')->toString());
+        $existing = $user->resources()->where('normalized_hash', UrlNormalizer::hash($normalized))->first();
+
+        if ($existing !== null) {
+            return $this->fileExistingLink($existing, $request);
+        }
+
         $title = trim($request->string('title')->toString());
         $description = trim($request->string('description')->toString());
         $metadata = $this->metadata($normalized);
@@ -72,6 +78,23 @@ class ResourceController extends Controller
                 'description' => '',
                 'favicon_url' => '',
                 'preview_image_url' => '',
+                'existing' => null,
+            ]);
+        }
+
+        $existing = $request->user()->resources()->where('normalized_hash', UrlNormalizer::hash($normalized))->first();
+
+        if ($existing !== null) {
+            return response()->json([
+                'title' => $existing->title,
+                'description' => $existing->description,
+                'favicon_url' => $existing->favicon_url,
+                'preview_image_url' => $existing->preview_image_url,
+                'existing' => [
+                    'id' => $existing->id,
+                    'title' => $existing->title,
+                    'collection_ids' => $existing->collections()->pluck('collections.id')->values(),
+                ],
             ]);
         }
 
@@ -82,6 +105,7 @@ class ResourceController extends Controller
             'description' => $metadata->description,
             'favicon_url' => $metadata->faviconUrl,
             'preview_image_url' => $metadata->previewImageUrl,
+            'existing' => null,
         ]);
     }
 
@@ -164,6 +188,67 @@ class ResourceController extends Controller
             $collection = $user->collections()->findOrFail($request->string('collection_id')->toString());
             $collection->attachResource($resource);
         }
+    }
+
+    private function fileExistingLink(Resource $resource, Request $request): RedirectResponse
+    {
+        $added = $this->attachNewCollections($resource, $request);
+
+        if ($added === 0) {
+            return back()->withErrors([
+                'url' => 'Deze link staat al in je bibliotheek.',
+            ]);
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $added === 1
+                ? 'Link toegevoegd aan de collectie.'
+                : 'Link toegevoegd aan de collecties.',
+        ]);
+
+        return back();
+    }
+
+    private function attachNewCollections(Resource $resource, Request $request): int
+    {
+        $ids = $this->requestedCollectionIds($request);
+        $current = $resource->collections()->pluck('collections.id');
+        $owned = $request->user()->collections()->whereIn('id', $ids->diff($current))->get()->keyBy('id');
+        $added = 0;
+
+        foreach ($ids->diff($current) as $id) {
+            $collection = $owned->get($id);
+
+            if ($collection === null) {
+                continue;
+            }
+
+            $max = $collection->resources()->max('collection_resource.position');
+            $collection->attachResource($resource, $max === null ? 0 : ((int) $max) + 1);
+            $added++;
+        }
+
+        return $added;
+    }
+
+    /**
+     * @return Collection<int, string>
+     */
+    private function requestedCollectionIds(Request $request): Collection
+    {
+        if ($request->exists('collection_ids')) {
+            return collect($request->input('collection_ids'))
+                ->filter(fn (mixed $id): bool => is_string($id) && $id !== '')
+                ->unique()
+                ->values();
+        }
+
+        if ($request->filled('collection_id')) {
+            return collect([$request->string('collection_id')->toString()]);
+        }
+
+        return collect();
     }
 
     public function favorite(Request $request, Resource $resource): RedirectResponse

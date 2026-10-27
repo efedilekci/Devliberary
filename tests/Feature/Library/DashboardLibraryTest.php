@@ -52,6 +52,57 @@ class DashboardLibraryTest extends TestCase
         $this->assertSame(1, Resource::query()->count());
     }
 
+    public function test_an_existing_link_can_be_filed_in_another_collection(): void
+    {
+        $user = User::factory()->create();
+        $laravel = Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        $notes = Collection::factory()->for($user)->create(['name' => 'Notities']);
+        $docs = Resource::factory()->for($user)->create([
+            'url' => 'https://laravel.com/docs',
+            'title' => 'Laravel docs',
+            'show_on_home' => true,
+        ]);
+        $php = Resource::factory()->for($user)->create(['title' => 'PHP']);
+        $laravel->attachResource($docs, 0);
+        $laravel->attachResource($php, 1);
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
+            'url' => 'https://laravel.com/docs/',
+            'title' => 'Andere titel',
+            'show_on_home' => '0',
+            'collection_ids' => [$laravel->id, $notes->id],
+        ])->assertRedirect(route('dashboard'))->assertSessionHasNoErrors();
+
+        $this->assertSame(2, $user->resources()->count());
+        $docs->refresh();
+        $this->assertSame('Laravel docs', $docs->title);
+        $this->assertTrue($docs->show_on_home);
+        $this->assertSame(0, $laravel->resources()->whereKey($docs->id)->firstOrFail()->pivot->position);
+        $this->assertSame(1, $laravel->resources()->whereKey($php->id)->firstOrFail()->pivot->position);
+        $this->assertTrue($notes->resources()->whereKey($docs->id)->exists());
+    }
+
+    public function test_filing_an_existing_link_into_its_own_collection_is_rejected(): void
+    {
+        $user = User::factory()->create();
+        $laravel = Collection::factory()->for($user)->create();
+        $docs = Resource::factory()->for($user)->create([
+            'url' => 'https://laravel.com/docs',
+            'title' => 'Laravel docs',
+        ]);
+        $laravel->attachResource($docs, 0);
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
+            'url' => 'https://laravel.com/docs',
+            'title' => 'Andere titel',
+            'collection_id' => $laravel->id,
+        ])->assertRedirect(route('dashboard'))->assertSessionHasErrors('url');
+
+        $this->assertSame(1, $user->resources()->count());
+        $this->assertSame('Laravel docs', $docs->fresh()->title);
+        $this->assertSame(1, $laravel->resources()->count());
+    }
+
     public function test_a_user_can_create_a_collection_and_put_a_link_in_it(): void
     {
         $user = User::factory()->create();

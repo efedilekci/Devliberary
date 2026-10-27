@@ -17,7 +17,13 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { preview, store as storeResource } from '@/routes/resources';
 
-type PreviewStatus = 'idle' | 'loading' | 'found' | 'empty';
+type PreviewStatus = 'idle' | 'loading' | 'found' | 'empty' | 'existing';
+
+type ExistingLink = {
+    id: string;
+    title: string;
+    collection_ids: string[];
+};
 
 function looksLikeUrl(value: string): boolean {
     const trimmed = value.trim();
@@ -46,9 +52,11 @@ export function AddLinkDialog({
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [previewImage, setPreviewImage] = useState('');
+    const [existing, setExisting] = useState<ExistingLink | null>(null);
     const [status, setStatus] = useState<PreviewStatus>('idle');
     const titleTouched = useRef(false);
     const descriptionTouched = useRef(false);
+    const filledFromExisting = useRef(false);
     const suggestedTitle = useRef('');
     const titleValue = useRef('');
     titleValue.current = title;
@@ -62,16 +70,36 @@ export function AddLinkDialog({
         setTitle('');
         setDescription('');
         setPreviewImage('');
+        setExisting(null);
         setStatus('idle');
         titleTouched.current = false;
         descriptionTouched.current = false;
+        filledFromExisting.current = false;
         suggestedTitle.current = '';
     }, [open, collectionId]);
 
+    function releaseExistingFill(): void {
+        if (!filledFromExisting.current) {
+            return;
+        }
+
+        filledFromExisting.current = false;
+        titleTouched.current = false;
+        descriptionTouched.current = false;
+        suggestedTitle.current = '';
+        setExisting(null);
+        setTitle('');
+        setDescription('');
+        setPreviewImage('');
+        setStatus('idle');
+    }
+
     useEffect(() => {
         if (!open || !looksLikeUrl(url)) {
+            releaseExistingFill();
             setStatus('idle');
             setPreviewImage('');
+            setExisting(null);
 
             if (!titleTouched.current) {
                 setTitle('');
@@ -84,6 +112,8 @@ export function AddLinkDialog({
 
             return;
         }
+
+        releaseExistingFill();
 
         const controller = new AbortController();
         const timer = window.setTimeout(() => {
@@ -113,7 +143,28 @@ export function AddLinkDialog({
                         title?: string;
                         description?: string;
                         preview_image_url?: string;
+                        existing?: ExistingLink | null;
                     };
+
+                    if (data.existing) {
+                        setExisting({
+                            id: data.existing.id,
+                            title: data.existing.title,
+                            collection_ids: data.existing.collection_ids ?? [],
+                        });
+                        setTitle(data.existing.title);
+                        suggestedTitle.current = data.existing.title;
+                        titleTouched.current = true;
+                        setDescription(data.description ?? '');
+                        descriptionTouched.current = true;
+                        filledFromExisting.current = true;
+                        setPreviewImage(data.preview_image_url ?? '');
+                        setStatus('existing');
+
+                        return;
+                    }
+
+                    setExisting(null);
                     const nextTitle = data.title ?? '';
 
                     if (!titleTouched.current || titleValue.current === suggestedTitle.current) {
@@ -187,6 +238,11 @@ export function AddLinkDialog({
                                         Titel gevonden. Je kunt hem nog aanpassen.
                                     </p>
                                 )}
+                                {status === 'existing' && !errors.url && (
+                                    <p className="text-muted-foreground text-xs">
+                                        Deze link staat al in je bibliotheek. Zet hem in de gekozen collecties.
+                                    </p>
+                                )}
                                 {status === 'empty' && (
                                     <p className="text-muted-foreground text-xs">
                                         Geen titel gevonden. Vul er zelf een in.
@@ -194,7 +250,7 @@ export function AddLinkDialog({
                                 )}
                                 <InputError message={errors.url} />
                             </div>
-                            {previewImage !== '' && status === 'found' && (
+                            {previewImage !== '' && (status === 'found' || status === 'existing') && (
                                 <img
                                     src={previewImage}
                                     alt=""
@@ -209,6 +265,7 @@ export function AddLinkDialog({
                                     name="title"
                                     type="text"
                                     value={title}
+                                    disabled={status === 'existing'}
                                     placeholder={status === 'loading' ? 'Wordt opgehaald' : 'Optioneel'}
                                     autoComplete="off"
                                     onChange={(event) => {
@@ -225,6 +282,7 @@ export function AddLinkDialog({
                                     name="description"
                                     rows={3}
                                     value={description}
+                                    disabled={status === 'existing'}
                                     placeholder="Optioneel"
                                     className="border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm"
                                     onChange={(event) => {
@@ -241,6 +299,7 @@ export function AddLinkDialog({
                                     name="tags"
                                     type="text"
                                     placeholder="react, documentatie"
+                                    disabled={status === 'existing'}
                                     autoComplete="off"
                                 />
                                 <p className="text-muted-foreground text-xs">
@@ -249,8 +308,13 @@ export function AddLinkDialog({
                                 <InputError message={errors.tags} />
                             </div>
                             <CollectionChecks
+                                key={existing?.id ?? 'nieuw'}
                                 collections={collections}
-                                selectedIds={collectionId ? [collectionId] : []}
+                                selectedIds={[...new Set([
+                                    ...(collectionId ? [collectionId] : []),
+                                    ...(existing?.collection_ids ?? []),
+                                ])]}
+                                lockedIds={existing?.collection_ids ?? []}
                                 idPrefix="new-link-collection"
                                 error={errors.collection_ids ?? errors['collection_ids.0']}
                             />
@@ -262,6 +326,7 @@ export function AddLinkDialog({
                                     type="checkbox"
                                     value="1"
                                     defaultChecked
+                                    disabled={status === 'existing'}
                                     className="accent-primary size-4"
                                 />
                                 <Label htmlFor="link-show-on-home">Tonen op home</Label>
@@ -274,7 +339,7 @@ export function AddLinkDialog({
                                 </DialogClose>
                                 <Button type="submit" disabled={processing}>
                                     {processing && <Spinner />}
-                                    Opslaan
+                                    {status === 'existing' ? 'In collecties zetten' : 'Opslaan'}
                                 </Button>
                             </DialogFooter>
                         </>

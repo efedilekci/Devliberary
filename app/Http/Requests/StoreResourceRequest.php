@@ -79,11 +79,6 @@ class StoreResourceRequest extends FormRequest
                 return;
             }
 
-            $hash = UrlNormalizer::hash($normalized);
-
-            if ($this->user()->resources()->where('normalized_hash', $hash)->exists()) {
-                $validator->errors()->add('url', 'Deze link staat al in je bibliotheek.');
-            }
         });
     }
 }

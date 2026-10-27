@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Library;
 
+use App\Models\Collection;
+use App\Models\Resource;
 use App\Models\User;
 use App\Support\LinkMetadataFetcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -66,6 +68,30 @@ class LinkMetadataTest extends TestCase
                 'description' => 'Korte uitleg.',
                 'preview_image_url' => 'https://example.com/cover.jpg',
             ]);
+    }
+
+    public function test_typing_a_saved_url_reports_the_existing_link(): void
+    {
+        Http::fake();
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create();
+        $resource = Resource::factory()->for($user)->create([
+            'url' => 'https://laravel.com/docs',
+            'title' => 'Laravel docs',
+            'description' => 'Documentatie',
+        ]);
+        $collection->attachResource($resource);
+
+        $this->actingAs($user)
+            ->postJson(route('resources.preview'), ['url' => 'https://laravel.com/docs/'])
+            ->assertOk()
+            ->assertJsonPath('existing.id', $resource->id)
+            ->assertJsonPath('existing.title', 'Laravel docs')
+            ->assertJsonPath('title', 'Laravel docs')
+            ->assertJsonPath('description', 'Documentatie')
+            ->assertJsonPath('existing.collection_ids.0', $collection->id);
+
+        Http::assertNothingSent();
     }
 
     public function test_a_private_url_returns_no_page_details(): void
