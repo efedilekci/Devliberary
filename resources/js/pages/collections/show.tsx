@@ -97,7 +97,11 @@ export default function CollectionShow({
                         Nog geen links in deze collectie.
                     </p>
                 ) : (
-                    <ResourceList resources={resources} view={linkView} />
+                    <ResourceList
+                        resources={resources}
+                        view={linkView}
+                        collectionId={collection.id}
+                    />
                 )}
             </div>
         </>

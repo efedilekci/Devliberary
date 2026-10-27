@@ -204,4 +204,65 @@ class CollectionOrganizeTest extends TestCase
         $this->assertTrue($collection->fresh()->is_pinned_to_home);
         $this->assertSame(0, $collection->fresh()->position);
     }
+
+    public function test_the_owner_can_reorder_links_inside_a_collection(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create();
+        $first = Resource::factory()->for($user)->create(['title' => 'Eerste']);
+        $second = Resource::factory()->for($user)->create(['title' => 'Tweede']);
+        $collection->attachResource($first, 0);
+        $collection->attachResource($second, 1);
+
+        $this->actingAs($user)
+            ->from(route('collections.show', $collection))
+            ->patch(route('collections.resources.move', [$collection, $second]), ['direction' => 'up'])
+            ->assertRedirect(route('collections.show', $collection));
+
+        $this->assertSame(1, (int) $collection->resources()->whereKey($first->id)->firstOrFail()->pivot->position);
+        $this->assertSame(0, (int) $collection->resources()->whereKey($second->id)->firstOrFail()->pivot->position);
+    }
+
+    public function test_moving_the_first_link_up_keeps_the_order(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create();
+        $first = Resource::factory()->for($user)->create(['title' => 'Eerste']);
+        $second = Resource::factory()->for($user)->create(['title' => 'Tweede']);
+        $collection->attachResource($first, 0);
+        $collection->attachResource($second, 1);
+
+        $this->actingAs($user)
+            ->patch(route('collections.resources.move', [$collection, $first]), ['direction' => 'up'])
+            ->assertRedirect();
+
+        $this->assertSame(0, (int) $collection->resources()->whereKey($first->id)->firstOrFail()->pivot->position);
+        $this->assertSame(1, (int) $collection->resources()->whereKey($second->id)->firstOrFail()->pivot->position);
+    }
+
+    public function test_another_user_cannot_reorder_a_link(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $collection = Collection::factory()->for($owner)->create();
+        $link = Resource::factory()->for($owner)->create();
+        $collection->attachResource($link, 0);
+
+        $this->actingAs($other)
+            ->patch(route('collections.resources.move', [$collection, $link]), ['direction' => 'down'])
+            ->assertNotFound();
+
+        $this->assertSame(0, (int) $collection->resources()->whereKey($link->id)->firstOrFail()->pivot->position);
+    }
+
+    public function test_a_link_outside_the_collection_cannot_be_reordered_there(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create();
+        $link = Resource::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->patch(route('collections.resources.move', [$collection, $link]), ['direction' => 'down'])
+            ->assertNotFound();
+    }
 }

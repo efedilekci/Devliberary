@@ -92,6 +92,7 @@ class CollectionController extends Controller
                 ->where('resources.is_archived', false)
                 ->with('collections:id')
                 ->orderByPivot('position')
+                ->orderBy('resources.title')
                 ->get(['resources.id', 'resources.title', 'resources.url', 'resources.description', 'resources.favicon_url', 'resources.preview_image_url', 'resources.is_favorite', 'resources.is_archived', 'resources.show_on_home', 'resources.tags'])
                 ->map(fn (Resource $resource) => [
                     'id' => $resource->id,
@@ -172,6 +173,42 @@ class CollectionController extends Controller
         foreach (array_values($reordered) as $position => $item) {
             $item->update(['position' => $position]);
         }
+
+        return back();
+    }
+
+    public function moveResource(Request $request, Collection $collection, Resource $resource): RedirectResponse
+    {
+        abort_unless($collection->user_id === $request->user()->id, 404);
+        abort_unless($resource->user_id === $request->user()->id, 404);
+
+        $direction = $request->validate([
+            'direction' => ['required', 'in:up,down'],
+        ])['direction'];
+
+        $links = $collection->resources()
+            ->where('resources.is_archived', false)
+            ->orderByPivot('position')
+            ->orderBy('resources.title')
+            ->get()
+            ->values();
+
+        $index = $links->search(fn (Resource $item): bool => $item->id === $resource->id);
+
+        if ($index === false) {
+            abort(404);
+        }
+
+        $target = $direction === 'up' ? $index - 1 : $index + 1;
+
+        if ($target < 0 || $target >= $links->count()) {
+            return back();
+        }
+
+        $from = (int) $links[$index]->pivot->position;
+        $to = (int) $links[$target]->pivot->position;
+        $collection->resources()->updateExistingPivot($links[$index]->id, ['position' => $to]);
+        $collection->resources()->updateExistingPivot($links[$target]->id, ['position' => $from]);
 
         return back();
     }

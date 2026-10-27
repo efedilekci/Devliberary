@@ -1,5 +1,5 @@
 import { Form, usePage } from '@inertiajs/react';
-import { Archive, ArchiveRestore, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronDown, ChevronUp, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { CollectionChecks } from '@/components/collection-checks';
 import InputError from '@/components/input-error';
@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { LinkView } from '@/hooks/use-link-view';
+import { move as moveLink } from '@/routes/collections/resources';
 import { archive, bulk, destroy, favorite, update } from '@/routes/resources';
 
 export type BulkAction = 'favorite' | 'unfavorite' | 'archive' | 'restore' | 'delete';
@@ -274,9 +275,68 @@ export function EditLinkButton({
     );
 }
 
-function ResourceActions({ resource }: { resource: LibraryResource }) {
+export function MoveLinkButtons({
+    collectionId,
+    resourceId,
+    index,
+    total,
+    className = 'size-7',
+}: {
+    collectionId: string;
+    resourceId: string;
+    index: number;
+    total: number;
+    className?: string;
+}) {
+    return (
+        <>
+            <Form {...moveLink.form({ collection: collectionId, resource: resourceId })}>
+                <input type="hidden" name="direction" value="up" />
+                <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    className={className}
+                    disabled={index === 0}
+                    aria-label="Omhoog"
+                >
+                    <ChevronUp />
+                </Button>
+            </Form>
+            <Form {...moveLink.form({ collection: collectionId, resource: resourceId })}>
+                <input type="hidden" name="direction" value="down" />
+                <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    className={className}
+                    disabled={index >= total - 1}
+                    aria-label="Omlaag"
+                >
+                    <ChevronDown />
+                </Button>
+            </Form>
+        </>
+    );
+}
+
+function ResourceActions({
+    resource,
+    move,
+}: {
+    resource: LibraryResource;
+    move?: { collectionId: string; index: number; total: number };
+}) {
     return (
         <div className="flex shrink-0 items-center">
+            {move ? (
+                <MoveLinkButtons
+                    collectionId={move.collectionId}
+                    resourceId={resource.id}
+                    index={move.index}
+                    total={move.total}
+                />
+            ) : null}
             <EditLinkButton resource={resource} />
             <Form {...favorite.form(resource.id)}>
                 <Button
@@ -473,10 +533,12 @@ export function ResourceList({
     resources,
     view = 'list',
     bulkActions = defaultBulkActions,
+    collectionId = null,
 }: {
     resources: LibraryResource[];
     view?: LinkView;
     bulkActions?: BulkAction[];
+    collectionId?: string | null;
 }) {
     const [selected, setSelected] = useState<string[]>([]);
 
@@ -506,7 +568,7 @@ export function ResourceList({
             />
             {view === 'grid' ? (
                 <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {resources.map((resource) => (
+                    {resources.map((resource, index) => (
                         <li
                             key={resource.id}
                             className="flex flex-col overflow-hidden rounded-xl border"
@@ -544,7 +606,14 @@ export function ResourceList({
                                             {hostLabel(resource.url)}
                                         </span>
                                     </div>
-                                    <ResourceActions resource={resource} />
+                                    <ResourceActions
+                                        resource={resource}
+                                        move={
+                                            collectionId
+                                                ? { collectionId, index, total: resources.length }
+                                                : undefined
+                                        }
+                                    />
                                 </div>
                             </div>
                         </li>
@@ -552,7 +621,7 @@ export function ResourceList({
                 </ul>
             ) : (
                 <ul className="divide-y rounded-xl border">
-                    {resources.map((resource) => (
+                    {resources.map((resource, index) => (
                         <li
                             key={resource.id}
                             className="flex items-center justify-between gap-3 px-4 py-3"
@@ -566,7 +635,14 @@ export function ResourceList({
                                 <ResourceMark url={resource.favicon_url} />
                                 <ResourceBody resource={resource} />
                             </div>
-                            <ResourceActions resource={resource} />
+                            <ResourceActions
+                                resource={resource}
+                                move={
+                                    collectionId
+                                        ? { collectionId, index, total: resources.length }
+                                        : undefined
+                                }
+                            />
                         </li>
                     ))}
                 </ul>

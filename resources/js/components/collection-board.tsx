@@ -8,7 +8,7 @@ import {
     IconPicker,
 } from '@/components/collection-appearance';
 import InputError from '@/components/input-error';
-import { EditLinkButton, ResourceMark } from '@/components/resource-list';
+import { EditLinkButton, MoveLinkButtons, ResourceMark } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -78,6 +78,7 @@ function CollectionCard({
     total,
     onAddLink,
     onEdit,
+    reorder = false,
     onDelete,
 }: {
     collection: CollectionItem;
@@ -85,6 +86,7 @@ function CollectionCard({
     total: number;
     onAddLink: (collectionId: string) => void;
     onEdit: (collection: CollectionItem) => void;
+    reorder?: boolean;
     onDelete: (collection: CollectionItem) => void;
 }) {
     const hidden = Math.max(collection.resources_count - collection.links.length, 0);
@@ -174,7 +176,7 @@ function CollectionCard({
                     {collection.links.length === 0 ? (
                         <li className="text-muted-foreground px-2 py-2 text-sm">Nog geen links.</li>
                     ) : (
-                        collection.links.map((link) => (
+                        collection.links.map((link, linkIndex) => (
                             <li
                                 key={link.id}
                                 className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1"
@@ -188,6 +190,15 @@ function CollectionCard({
                                 >
                                     {link.title}
                                 </a>
+                                {reorder ? (
+                                    <MoveLinkButtons
+                                        collectionId={collection.id}
+                                        resourceId={link.id}
+                                        index={linkIndex}
+                                        total={collection.resources_count}
+                                        className="size-7 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                                    />
+                                ) : null}
                                 <EditLinkButton
                                     resource={link}
                                     collectionId={collection.id}
@@ -511,6 +522,7 @@ export function CollectionBoard({
                                 collection={card}
                                 index={spot.index}
                                 total={spot.total}
+                                reorder={!onHome}
                                 onAddLink={(collectionId) => {
                                     setLinkCollectionId(collectionId);
                                     setLinkOpen(true);
