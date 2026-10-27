@@ -14,6 +14,7 @@ class StoreCollectionRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:100'],
+            'show_on_home' => ['sometimes', 'boolean'],
         ];
     }
 }

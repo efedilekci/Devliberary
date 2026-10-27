@@ -17,7 +17,11 @@ export default function CollectionsIndex({
         <>
             <Head title="Collecties" />
             <div className="flex flex-1 flex-col p-4">
-                <CollectionBoard collections={collections} uncollected={uncollected} />
+                <CollectionBoard
+                    collections={collections}
+                    uncollected={uncollected}
+                    place="collections"
+                />
             </div>
         </>
     );

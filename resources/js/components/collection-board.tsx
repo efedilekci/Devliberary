@@ -208,7 +208,9 @@ export function CollectionDialog({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Collectie maken</DialogTitle>
-                    <DialogDescription>Geef de collectie een naam.</DialogDescription>
+                    <DialogDescription>
+                        Geef de collectie een naam en kies of hij op home staat.
+                    </DialogDescription>
                 </DialogHeader>
                 <Form
                     {...storeCollection.form()}
@@ -230,6 +232,18 @@ export function CollectionDialog({
                                     autoComplete="off"
                                 />
                                 <InputError message={errors.name} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input type="hidden" name="show_on_home" value="0" />
+                                <input
+                                    id="show_on_home"
+                                    name="show_on_home"
+                                    type="checkbox"
+                                    value="1"
+                                    defaultChecked
+                                    className="accent-primary size-4"
+                                />
+                                <Label htmlFor="show_on_home">Tonen op home</Label>
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild>
@@ -271,40 +285,64 @@ function groupPlace(collection: CollectionItem, collections: CollectionItem[]): 
 export function CollectionBoard({
     collections,
     uncollected,
+    place,
 }: {
     collections: CollectionItem[];
     uncollected: CollectionLink[];
+    place: 'home' | 'collections';
 }) {
+    const onHome = place === 'home';
     const [filter, setFilter] = useState('');
     const [linkOpen, setLinkOpen] = useState(false);
     const [linkCollectionId, setLinkCollectionId] = useState<string | null>(null);
     const [collectionOpen, setCollectionOpen] = useState(false);
-    const needle = filter.trim().toLocaleLowerCase('nl');
+    const needle = onHome ? '' : filter.trim().toLocaleLowerCase('nl');
+    const pool = onHome
+        ? collections.filter((collection) => collection.is_pinned_to_home)
+        : collections;
     const visible =
         needle === ''
-            ? collections
-            : collections.filter((collection) =>
+            ? pool
+            : pool.filter((collection) =>
                   collection.name.toLocaleLowerCase('nl').includes(needle),
               );
 
     return (
         <section className="grid gap-4">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b">
-                <h2 className="border-b-2 border-[#F97316] px-1 pb-2 text-sm font-medium">
-                    Jouw collecties
-                </h2>
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <label htmlFor="collection-filter" className="sr-only">
-                        Filter collecties
-                    </label>
-                    <Input
-                        id="collection-filter"
-                        type="search"
-                        value={filter}
-                        onChange={(event) => setFilter(event.target.value)}
-                        placeholder="Filter collecties"
-                        className="h-8 w-44"
-                    />
+            <div
+                className={
+                    onHome
+                        ? 'flex flex-wrap items-center justify-end gap-2'
+                        : 'flex flex-wrap items-end justify-between gap-3 border-b'
+                }
+            >
+                {!onHome && (
+                    <h2 className="border-b-2 border-[#F97316] px-1 pb-2 text-sm font-medium">
+                        Jouw collecties
+                    </h2>
+                )}
+                <div
+                    className={
+                        onHome
+                            ? 'flex flex-wrap items-center gap-2'
+                            : 'mb-2 flex flex-wrap items-center gap-2'
+                    }
+                >
+                    {!onHome && (
+                        <>
+                            <label htmlFor="collection-filter" className="sr-only">
+                                Filter collecties
+                            </label>
+                            <Input
+                                id="collection-filter"
+                                type="search"
+                                value={filter}
+                                onChange={(event) => setFilter(event.target.value)}
+                                placeholder="Filter collecties"
+                                className="h-8 w-44"
+                            />
+                        </>
+                    )}
                     <Button
                         type="button"
                         variant="outline"
@@ -335,6 +373,9 @@ export function CollectionBoard({
                 onOpenChange={setLinkOpen}
             />
             <CollectionDialog open={collectionOpen} onOpenChange={setCollectionOpen} />
+            {onHome && visible.length === 0 && (
+                <p className="text-muted-foreground text-sm">Nog geen collecties op home.</p>
+            )}
             {needle !== '' && visible.length === 0 ? (
                 <p className="text-muted-foreground text-sm">Geen collecties gevonden.</p>
             ) : (

@@ -71,6 +71,29 @@ class DashboardLibraryTest extends TestCase
         $this->assertTrue($collection->resources()->where('title', 'Laravel')->exists());
     }
 
+    public function test_a_new_collection_is_on_home_only_when_chosen(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('collections.store'), [
+            'name' => 'Alleen collecties',
+            'show_on_home' => '0',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertFalse(
+            $user->collections()->where('name', 'Alleen collecties')->firstOrFail()->is_pinned_to_home,
+        );
+
+        $this->actingAs($user)->from(route('collections.index'))->post(route('collections.store'), [
+            'name' => 'Op home',
+            'show_on_home' => '1',
+        ])->assertRedirect(route('collections.index'));
+
+        $this->assertTrue(
+            $user->collections()->where('name', 'Op home')->firstOrFail()->is_pinned_to_home,
+        );
+    }
+
     public function test_a_user_cannot_file_a_link_in_someone_elses_collection(): void
     {
         $user = User::factory()->create();

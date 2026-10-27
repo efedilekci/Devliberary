@@ -47,7 +47,11 @@ export default function Dashboard({
             <Head title={pageTitle} />
             <div className="flex flex-1 flex-col gap-4 p-4">
                 {showBoard ? (
-                    <CollectionBoard collections={collections} uncollected={uncollected} />
+                <CollectionBoard
+                    collections={collections}
+                    uncollected={uncollected}
+                    place="home"
+                />
                 ) : (
                     <>
                         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -27,6 +27,7 @@ class CollectionController extends Controller
             'name' => $request->string('name')->toString(),
             'description' => '',
             'position' => $position,
+            'is_pinned_to_home' => $request->boolean('show_on_home'),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Collectie aangemaakt.']);
