@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCollectionRequest;
 use App\Models\Collection;
+use App\Models\Resource;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,7 +37,17 @@ class CollectionController extends Controller
             'resources' => $collection->resources()
                 ->where('resources.is_archived', false)
                 ->orderByPivot('position')
-                ->get(['resources.id', 'resources.title', 'resources.url', 'resources.favicon_url', 'resources.is_favorite', 'resources.is_archived']),
+                ->get(['resources.id', 'resources.title', 'resources.url', 'resources.favicon_url', 'resources.is_favorite', 'resources.is_archived'])
+                ->map(fn (Resource $resource) => [
+                    'id' => $resource->id,
+                    'title' => $resource->title,
+                    'url' => $resource->url,
+                    'favicon_url' => $resource->favicon_url,
+                    'is_favorite' => $resource->is_favorite,
+                    'is_archived' => $resource->is_archived,
+                    'collection_id' => $collection->id,
+                ])
+                ->values(),
         ]);
     }
 

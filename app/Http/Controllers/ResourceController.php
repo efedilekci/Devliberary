@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BulkResourceRequest;
 use App\Http\Requests\StoreResourceRequest;
+use App\Http\Requests\UpdateResourceRequest;
 use App\Models\Resource;
 use App\Support\LinkMetadata;
 use App\Support\LinkMetadataFetcher;
@@ -47,6 +48,31 @@ class ResourceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link opgeslagen.']);
 
         return to_route('dashboard');
+    }
+
+    public function update(UpdateResourceRequest $request, Resource $resource): RedirectResponse
+    {
+        $normalized = UrlNormalizer::normalize($request->string('url')->toString());
+        $attributes = [
+            'url' => $request->string('url')->toString(),
+            'title' => mb_substr($request->string('title')->toString(), 0, 200),
+        ];
+
+        if ($normalized !== $resource->normalized_url) {
+            $attributes['favicon_url'] = $this->metadata($normalized)->faviconUrl;
+        }
+
+        $resource->update($attributes);
+        $resource->collections()->detach();
+
+        if ($request->filled('collection_id')) {
+            $collection = $request->user()->collections()->findOrFail($request->string('collection_id')->toString());
+            $collection->attachResource($resource);
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Link bijgewerkt.']);
+
+        return back();
     }
 
     public function favorite(Request $request, Resource $resource): RedirectResponse

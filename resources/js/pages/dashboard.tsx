@@ -2,7 +2,7 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { FolderPlus, MoreHorizontal, Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { LinkViewToggle, ResourceList, ResourceMark, type LibraryResource } from '@/components/resource-list';
+import { EditLinkButton, LinkViewToggle, ResourceList, ResourceMark, type LibraryResource } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -153,6 +153,11 @@ function CollectionCard({
                                 >
                                     {link.title}
                                 </a>
+                                <EditLinkButton
+                                    resource={link}
+                                    collectionId={collection.id}
+                                    className="size-7"
+                                />
                                 <Form {...favoriteResource.form(link.id)}>
                                     <Button
                                         type="submit"
@@ -474,6 +479,11 @@ export default function Dashboard({
                                                 >
                                                     {link.title}
                                                 </a>
+                                                <EditLinkButton
+                                                    resource={link}
+                                                    collectionId={null}
+                                                    className="size-7"
+                                                />
                                                 <Form {...favoriteResource.form(link.id)}>
                                                     <Button
                                                         type="submit"

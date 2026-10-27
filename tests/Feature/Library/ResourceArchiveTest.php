@@ -63,9 +63,10 @@ class ResourceArchiveTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard', ['links' => 'favorites']))
             ->assertOk()
-            ->assertSee('Favoriet')
-            ->assertDontSee('Oude favoriet')
-            ->assertDontSee('Gewoon');
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('linkFilter', 'favorites')
+                ->has('resources', 1)
+                ->where('resources.0.title', 'Favoriet'));
     }
 
     public function test_an_archived_link_leaves_its_collection(): void

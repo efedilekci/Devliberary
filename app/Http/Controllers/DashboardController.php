@@ -74,8 +74,20 @@ class DashboardController extends Controller
             'linkFilter' => $linkFilter,
             'search' => $search,
             'resources' => $resources
+                ->with('collections:id')
                 ->limit(30)
-                ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite', 'is_archived', 'created_at']),
+                ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite', 'is_archived', 'created_at'])
+                ->map(fn (Resource $resource) => [
+                    'id' => $resource->id,
+                    'title' => $resource->title,
+                    'url' => $resource->url,
+                    'favicon_url' => $resource->favicon_url,
+                    'is_favorite' => $resource->is_favorite,
+                    'is_archived' => $resource->is_archived,
+                    'created_at' => $resource->created_at,
+                    'collection_id' => $resource->collections->first()?->id,
+                ])
+                ->values(),
         ]);
     }
 }

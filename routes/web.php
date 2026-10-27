@@ -11,6 +11,7 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'session.version'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('resources', [ResourceController::class, 'store'])->name('resources.store');
+    Route::patch('resources/{resource}', [ResourceController::class, 'update'])->name('resources.update');
     Route::post('resources/bulk', [ResourceController::class, 'bulk'])->name('resources.bulk');
     Route::patch('resources/{resource}/favorite', [ResourceController::class, 'favorite'])->name('resources.favorite');
     Route::patch('resources/{resource}/archive', [ResourceController::class, 'archive'])->name('resources.archive');

@@ -1,6 +1,7 @@
-import { Form } from '@inertiajs/react';
-import { Archive, ArchiveRestore, LayoutGrid, Link2, List, Star, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Form, usePage } from '@inertiajs/react';
+import { Archive, ArchiveRestore, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -12,9 +13,12 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { LinkView } from '@/hooks/use-link-view';
-import { archive, bulk, destroy, favorite } from '@/routes/resources';
+import { archive, bulk, destroy, favorite, update } from '@/routes/resources';
 
 export type BulkAction = 'favorite' | 'unfavorite' | 'archive' | 'restore' | 'delete';
 
@@ -35,6 +39,7 @@ export type LibraryResource = {
     favicon_url: string;
     is_favorite: boolean;
     is_archived: boolean;
+    collection_id?: string | null;
 };
 
 export function ResourceMark({ url }: { url: string }) {
@@ -77,9 +82,117 @@ function ResourceBody({ resource }: { resource: LibraryResource }) {
     );
 }
 
+export function EditLinkButton({
+    resource,
+    collectionId,
+    className,
+}: {
+    resource: {
+        id: string;
+        title: string;
+        url: string;
+        collection_id?: string | null;
+    };
+    collectionId?: string | null;
+    className?: string;
+}) {
+    const collections = usePage().props.libraryNav?.collections ?? [];
+    const selected =
+        collectionId !== undefined ? collectionId : (resource.collection_id ?? null);
+    const [open, setOpen] = useState(false);
+    const options = [...collections].sort((a, b) => a.name.localeCompare(b.name, 'nl'));
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={className}
+                    aria-label="Link bewerken"
+                >
+                    <Pencil />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>Link bewerken</DialogTitle>
+                <DialogDescription>
+                    Pas de titel, het adres of de collectie aan.
+                </DialogDescription>
+                <Form
+                    key={`${resource.id}-${resource.title}-${resource.url}-${selected ?? ''}`}
+                    {...update.form(resource.id)}
+                    disableWhileProcessing
+                    onSuccess={() => setOpen(false)}
+                    className="grid gap-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <div className="grid gap-2">
+                                <Label htmlFor={`url-${resource.id}`}>Link</Label>
+                                <Input
+                                    id={`url-${resource.id}`}
+                                    name="url"
+                                    type="text"
+                                    required
+                                    defaultValue={resource.url}
+                                    autoComplete="off"
+                                />
+                                <InputError message={errors.url} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor={`title-${resource.id}`}>Titel</Label>
+                                <Input
+                                    id={`title-${resource.id}`}
+                                    name="title"
+                                    type="text"
+                                    required
+                                    defaultValue={resource.title}
+                                    autoComplete="off"
+                                />
+                                <InputError message={errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor={`collection-${resource.id}`}>Collectie</Label>
+                                <select
+                                    id={`collection-${resource.id}`}
+                                    name="collection_id"
+                                    defaultValue={selected ?? ''}
+                                    className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
+                                >
+                                    <option value="">Geen collectie</option>
+                                    {options.map((collection) => (
+                                        <option key={collection.id} value={collection.id}>
+                                            {collection.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.collection_id} />
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="secondary">
+                                        Annuleren
+                                    </Button>
+                                </DialogClose>
+                                <Button type="submit" disabled={processing}>
+                                    {processing && <Spinner />}
+                                    Opslaan
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function ResourceActions({ resource }: { resource: LibraryResource }) {
     return (
         <div className="flex shrink-0 items-center">
+            <EditLinkButton resource={resource} />
             <Form {...favorite.form(resource.id)}>
                 <Button
                     type="submit"
