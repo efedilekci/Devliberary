@@ -403,54 +403,9 @@ export default function Dashboard({
                             onOpenChange={setCollectionOpen}
                         />
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex gap-3">
-                            {(
-                                [
-                                    ['active', 'Alles', dashboard()],
-                                    [
-                                        'all',
-                                        'Alle links',
-                                        dashboard.url({
-                                            query: { links: 'all' },
-                                        }),
-                                    ],
-                                    [
-                                        'favorites',
-                                        'Favorieten',
-                                        dashboard.url({
-                                            query: { links: 'favorites' },
-                                        }),
-                                    ],
-                                    [
-                                        'archived',
-                                        'Archief',
-                                        dashboard.url({
-                                            query: { links: 'archived' },
-                                        }),
-                                    ],
-                                ] as const
-                            ).map(([key, label, href]) => (
-                                <Link
-                                    key={key}
-                                    href={href}
-                                    aria-current={
-                                        linkFilter === key ? 'page' : undefined
-                                    }
-                                    className={
-                                        linkFilter === key
-                                            ? 'text-sm font-medium'
-                                            : 'text-muted-foreground text-sm'
-                                    }
-                                >
-                                    {label}
-                                </Link>
-                            ))}
-                        </div>
-                        {linkFilter !== 'active' && (
-                            <LinkViewToggle view={linkView} onChange={setLinkView} />
-                        )}
-                    </div>
+                    {linkFilter !== 'active' && (
+                        <LinkViewToggle view={linkView} onChange={setLinkView} />
+                    )}
                 </div>
 
                 {linkFilter === 'active' ? (

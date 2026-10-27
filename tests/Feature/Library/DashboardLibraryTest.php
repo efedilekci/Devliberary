@@ -127,4 +127,31 @@ class DashboardLibraryTest extends TestCase
                 ->has('resources', 1)
                 ->where('resources.0.title', 'Docs'));
     }
+
+    public function test_the_sidebar_lists_links_favorites_and_collections(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        Collection::factory()->for($other)->create(['name' => 'Niet van jou']);
+        $favorite = Resource::factory()->for($user)->create([
+            'title' => 'Docs',
+            'is_favorite' => true,
+        ]);
+        Resource::factory()->for($user)->create([
+            'title' => 'Weg',
+            'is_archived' => true,
+        ]);
+        $collection->attachResource($favorite);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('libraryNav.linkCount', 1)
+                ->where('libraryNav.favoriteCount', 1)
+                ->has('libraryNav.collections', 1)
+                ->where('libraryNav.collections.0.name', 'Laravel')
+                ->where('libraryNav.collections.0.resources_count', 1));
+    }
 }

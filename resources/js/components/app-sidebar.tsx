@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { Code, LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Archive, Code, Folder, Layers, LayoutGrid, Star } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,25 +14,76 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { show as showCollection } from '@/routes/collections';
 import { index as snippets } from '@/routes/snippets';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Snippets',
-        href: snippets(),
-        icon: Code,
-    },
-];
-
 const footerNavItems: NavItem[] = [];
 
+function linkFilter(url: string): 'active' | 'all' | 'favorites' | 'archived' | null {
+    const [path, query = ''] = url.split('?');
+
+    if (path !== '/dashboard') {
+        return null;
+    }
+
+    const links = new URLSearchParams(query).get('links');
+
+    if (links === 'all' || links === 'favorites' || links === 'archived') {
+        return links;
+    }
+
+    return 'active';
+}
+
 export function AppSidebar() {
+    const { url, props } = usePage();
+    const libraryNav = props.libraryNav;
+    const filter = linkFilter(url);
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+            isActive: filter === 'active',
+        },
+        {
+            title: 'Alle links',
+            href: dashboard.url({ query: { links: 'all' } }),
+            icon: Layers,
+            isActive: filter === 'all',
+            badge: libraryNav?.linkCount,
+        },
+        {
+            title: 'Favorieten',
+            href: dashboard.url({ query: { links: 'favorites' } }),
+            icon: Star,
+            isActive: filter === 'favorites',
+            badge: libraryNav?.favoriteCount,
+        },
+        {
+            title: 'Archief',
+            href: dashboard.url({ query: { links: 'archived' } }),
+            icon: Archive,
+            isActive: filter === 'archived',
+        },
+        {
+            title: 'Snippets',
+            href: snippets(),
+            icon: Code,
+        },
+    ];
+
+    const collectionItems: NavItem[] = (libraryNav?.collections ?? []).map(
+        (collection) => ({
+            title: collection.name,
+            href: showCollection(collection.id),
+            icon: Folder,
+            badge: collection.resources_count,
+        }),
+    );
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -49,6 +100,9 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+                {collectionItems.length > 0 && (
+                    <NavMain label="Jouw collecties" items={collectionItems} />
+                )}
             </SidebarContent>
 
             <SidebarFooter>
