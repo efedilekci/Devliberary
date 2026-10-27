@@ -623,12 +623,14 @@ export function ResourceList({
     bulkActions = defaultBulkActions,
     collectionId = null,
     collectionName = '',
+    reorder = true,
 }: {
     resources: LibraryResource[];
     view?: LinkView;
     bulkActions?: BulkAction[];
     collectionId?: string | null;
     collectionName?: string;
+    reorder?: boolean;
 }) {
     const [selected, setSelected] = useState<string[]>([]);
 
@@ -705,7 +707,7 @@ export function ResourceList({
                                     <ResourceActions
                                         resource={resource}
                                         move={
-                                            collectionId
+                                            collectionId && reorder
                                                 ? { collectionId, index, total: resources.length }
                                                 : undefined
                                         }
@@ -739,7 +741,7 @@ export function ResourceList({
                             <ResourceActions
                                 resource={resource}
                                 move={
-                                    collectionId
+                                    collectionId && reorder
                                         ? { collectionId, index, total: resources.length }
                                         : undefined
                                 }

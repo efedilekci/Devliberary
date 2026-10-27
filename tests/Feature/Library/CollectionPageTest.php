@@ -63,6 +63,32 @@ class CollectionPageTest extends TestCase
         $this->assertTrue($collection->resources()->where('title', 'Voorbeeld')->exists());
     }
 
+    public function test_search_on_a_collection_stays_inside_that_collection(): void
+    {
+        $user = User::factory()->create();
+        $laravel = Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        $notes = Collection::factory()->for($user)->create(['name' => 'Notities']);
+        $docs = Resource::factory()->for($user)->create(['title' => 'Laravel docs']);
+        $php = Resource::factory()->for($user)->create(['title' => 'PHP']);
+        $archived = Resource::factory()->for($user)->create([
+            'title' => 'Laravel archief',
+            'is_archived' => true,
+        ]);
+        $note = Resource::factory()->for($user)->create(['title' => 'Laravel notitie']);
+        $laravel->attachResource($docs, 0);
+        $laravel->attachResource($php, 1);
+        $laravel->attachResource($archived, 2);
+        $notes->attachResource($note, 0);
+
+        $this->actingAs($user)
+            ->get(route('collections.show', ['collection' => $laravel, 'q' => 'Laravel']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('search', 'Laravel')
+                ->has('resources', 1)
+                ->where('resources.0.title', 'Laravel docs'));
+    }
+
     public function test_another_user_cannot_open_the_collection(): void
     {
         $owner = User::factory()->create();

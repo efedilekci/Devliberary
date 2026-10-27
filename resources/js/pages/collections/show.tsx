@@ -24,9 +24,11 @@ type CollectionItem = {
 export default function CollectionShow({
     collection,
     resources,
+    search,
 }: {
     collection: CollectionItem;
     resources: LibraryResource[];
+    search: string;
 }) {
     const [linkView, setLinkView] = useLinkView();
     const [editOpen, setEditOpen] = useState(false);
@@ -94,7 +96,9 @@ export default function CollectionShow({
                 )}
                 {resources.length === 0 ? (
                     <p className="text-muted-foreground text-sm">
-                        Nog geen links in deze collectie.
+                        {search !== ''
+                            ? 'Geen links gevonden.'
+                            : 'Nog geen links in deze collectie.'}
                     </p>
                 ) : (
                     <ResourceList
@@ -102,6 +106,7 @@ export default function CollectionShow({
                         view={linkView}
                         collectionId={collection.id}
                         collectionName={collection.name}
+                        reorder={search === ''}
                     />
                 )}
             </div>

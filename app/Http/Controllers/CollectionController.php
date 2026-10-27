@@ -86,13 +86,18 @@ class CollectionController extends Controller
     {
         abort_unless($collection->user_id === $request->user()->id, 404);
 
+        $search = mb_substr(trim($request->string('q')->toString()), 0, 200);
+        $resources = $collection->resources()
+            ->where('resources.is_archived', false)
+            ->with('collections:id')
+            ->orderByPivot('position')
+            ->orderBy('resources.title');
+        $resources->search($search);
+
         return Inertia::render('collections/show', [
             'collection' => $collection->only(['id', 'name', 'description', 'icon', 'accent_color', 'is_pinned_to_home']),
-            'resources' => $collection->resources()
-                ->where('resources.is_archived', false)
-                ->with('collections:id')
-                ->orderByPivot('position')
-                ->orderBy('resources.title')
+            'search' => $search,
+            'resources' => $resources
                 ->get(['resources.id', 'resources.title', 'resources.url', 'resources.description', 'resources.favicon_url', 'resources.preview_image_url', 'resources.is_favorite', 'resources.is_archived', 'resources.show_on_home', 'resources.tags'])
                 ->map(fn (Resource $resource) => [
                     'id' => $resource->id,

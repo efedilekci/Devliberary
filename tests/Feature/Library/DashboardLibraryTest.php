@@ -286,10 +286,24 @@ class DashboardLibraryTest extends TestCase
             'url' => 'https://www.php.net',
         ]);
         Resource::factory()->for($user)->create([
+            'title' => 'PHP tips',
+            'url' => 'https://example.com/tips',
+            'is_favorite' => true,
+        ]);
+        Resource::factory()->for($user)->create([
             'title' => 'Laravel archief',
             'url' => 'https://laravel.com/old',
             'is_archived' => true,
         ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['links' => 'favorites', 'q' => 'php']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('linkFilter', 'favorites')
+                ->where('search', 'php')
+                ->has('resources', 1)
+                ->where('resources.0.title', 'PHP tips'));
 
         $this->actingAs($user)
             ->get(route('dashboard', ['q' => 'laravel']))

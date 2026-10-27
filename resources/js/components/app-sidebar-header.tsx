@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { show as showCollection } from '@/routes/collections';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
 function searchQuery(url: string): string {
@@ -20,6 +21,22 @@ function collectionIdFromUrl(url: string): string | null {
     const match = url.split('?')[0].match(/^\/collections\/([^/]+)$/);
 
     return match ? match[1] : null;
+}
+
+function linkFilterFromUrl(url: string): string | null {
+    const [path, query = ''] = url.split('?');
+
+    if (path !== '/dashboard') {
+        return null;
+    }
+
+    const links = new URLSearchParams(query).get('links');
+
+    if (links === 'all' || links === 'favorites' || links === 'archived' || links === 'recent') {
+        return links;
+    }
+
+    return null;
 }
 
 export function AppSidebarHeader({
@@ -39,9 +56,28 @@ export function AppSidebarHeader({
         const value = new FormData(event.currentTarget).get('q');
         const term = typeof value === 'string' ? value.trim() : '';
 
-        router.get(dashboard.url(), term === '' ? {} : { q: term }, {
-            preserveScroll: true,
-        });
+        if (linkCollectionId) {
+            router.get(
+                showCollection.url(linkCollectionId),
+                term === '' ? {} : { q: term },
+                { preserveScroll: true },
+            );
+
+            return;
+        }
+
+        const links = linkFilterFromUrl(url);
+        const params: Record<string, string> = {};
+
+        if (links !== null) {
+            params.links = links;
+        }
+
+        if (term !== '') {
+            params.q = term;
+        }
+
+        router.get(dashboard.url(), params, { preserveScroll: true });
     }
 
     return (
