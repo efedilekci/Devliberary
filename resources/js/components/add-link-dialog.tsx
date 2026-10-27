@@ -73,6 +73,20 @@ export function AddLinkDialog({
                                 <InputError message={errors.title} />
                             </div>
                             <div className="grid gap-2">
+                                <Label htmlFor="tags">Tags</Label>
+                                <Input
+                                    id="tags"
+                                    name="tags"
+                                    type="text"
+                                    placeholder="react, documentatie"
+                                    autoComplete="off"
+                                />
+                                <p className="text-muted-foreground text-xs">
+                                    Scheid tags met een komma.
+                                </p>
+                                <InputError message={errors.tags} />
+                            </div>
+                            <div className="grid gap-2">
                                 <Label htmlFor="collection_id">Collectie</Label>
                                 <select
                                     id="collection_id"

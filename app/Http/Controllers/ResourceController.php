@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateResourceRequest;
 use App\Models\Resource;
 use App\Support\LinkMetadata;
 use App\Support\LinkMetadataFetcher;
+use App\Support\TagList;
 use App\Support\UrlNormalizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class ResourceController extends Controller
             'favicon_url' => $metadata->faviconUrl,
             'preview_image_url' => $metadata->previewImageUrl,
             'notes' => '',
-            'tags' => [],
+            'tags' => TagList::parse($request->string('tags')->toString()),
         ]);
 
         if ($request->filled('collection_id')) {
@@ -57,6 +58,7 @@ class ResourceController extends Controller
         $attributes = [
             'url' => $request->string('url')->toString(),
             'title' => mb_substr($request->string('title')->toString(), 0, 200),
+            'tags' => TagList::parse($request->string('tags')->toString()),
         ];
 
         $missingPreview = $resource->description === '' && $resource->preview_image_url === '';

@@ -85,7 +85,8 @@ class Resource extends Model
         $query->where(function (Builder $query) use ($like): void {
             $query->whereRaw("title like ? escape '!'", [$like])
                 ->orWhereRaw("url like ? escape '!'", [$like])
-                ->orWhereRaw("description like ? escape '!'", [$like]);
+                ->orWhereRaw("description like ? escape '!'", [$like])
+                ->orWhereRaw("tags like ? escape '!'", [$like]);
         });
     }
 

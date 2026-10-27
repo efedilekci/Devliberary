@@ -41,6 +41,7 @@ type CollectionLink = {
     url: string;
     favicon_url: string;
     is_favorite: boolean;
+    tags?: string[];
 };
 
 type CollectionItem = {

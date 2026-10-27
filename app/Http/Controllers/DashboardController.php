@@ -58,6 +58,7 @@ class DashboardController extends Controller
                         'url' => $resource->url,
                         'favicon_url' => $resource->favicon_url,
                         'is_favorite' => $resource->is_favorite,
+                        'tags' => $resource->tags,
                     ])->values(),
                 ];
             })
@@ -70,13 +71,13 @@ class DashboardController extends Controller
                 ->whereDoesntHave('collections')
                 ->latest()
                 ->limit(30)
-                ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite']),
+                ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite', 'tags']),
             'linkFilter' => $linkFilter,
             'search' => $search,
             'resources' => $resources
                 ->with('collections:id')
                 ->limit(30)
-                ->get(['id', 'title', 'url', 'description', 'favicon_url', 'preview_image_url', 'is_favorite', 'is_archived', 'created_at'])
+                ->get(['id', 'title', 'url', 'description', 'favicon_url', 'preview_image_url', 'is_favorite', 'is_archived', 'tags', 'created_at'])
                 ->map(fn (Resource $resource) => [
                     'id' => $resource->id,
                     'title' => $resource->title,
@@ -84,6 +85,7 @@ class DashboardController extends Controller
                     'description' => $resource->description,
                     'favicon_url' => $resource->favicon_url,
                     'preview_image_url' => $resource->preview_image_url,
+                    'tags' => $resource->tags,
                     'is_favorite' => $resource->is_favorite,
                     'is_archived' => $resource->is_archived,
                     'created_at' => $resource->created_at,

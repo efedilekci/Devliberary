@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\Collection;
+use App\Support\TagList;
 use App\Support\UrlNormalizer;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -19,6 +21,17 @@ class StoreResourceRequest extends FormRequest
         return [
             'url' => ['required', 'string', 'max:2048'],
             'title' => ['nullable', 'string', 'max:200'],
+            'tags' => ['nullable', 'string', 'max:400', function (string $attribute, mixed $value, Closure $fail): void {
+                if (! is_string($value)) {
+                    return;
+                }
+
+                $problem = TagList::problem($value);
+
+                if ($problem !== null) {
+                    $fail($problem);
+                }
+            }],
             'collection_id' => [
                 'nullable',
                 'uuid',

@@ -39,6 +39,7 @@ export type LibraryResource = {
     description?: string;
     favicon_url: string;
     preview_image_url?: string;
+    tags?: string[];
     is_favorite: boolean;
     is_archived: boolean;
     collection_id?: string | null;
@@ -96,6 +97,25 @@ export function ResourceMark({ url }: { url: string }) {
     );
 }
 
+function ResourceTags({ tags }: { tags?: string[] }) {
+    if (!tags || tags.length === 0) {
+        return null;
+    }
+
+    return (
+        <ul className="mt-1 flex flex-wrap gap-1">
+            {tags.map((tag) => (
+                <li
+                    key={tag}
+                    className="bg-muted text-muted-foreground rounded-md px-1.5 py-0.5 text-xs"
+                >
+                    {tag}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
 function ResourceBody({ resource }: { resource: LibraryResource }) {
     return (
         <div className="min-w-0">
@@ -111,6 +131,7 @@ function ResourceBody({ resource }: { resource: LibraryResource }) {
             {resource.description ? (
                 <p className="text-muted-foreground line-clamp-1 text-sm">{resource.description}</p>
             ) : null}
+            <ResourceTags tags={resource.tags} />
         </div>
     );
 }
@@ -124,6 +145,7 @@ export function EditLinkButton({
         id: string;
         title: string;
         url: string;
+        tags?: string[];
         collection_id?: string | null;
     };
     collectionId?: string | null;
@@ -151,10 +173,10 @@ export function EditLinkButton({
             <DialogContent>
                 <DialogTitle>Link bewerken</DialogTitle>
                 <DialogDescription>
-                    Pas de titel, het adres of de collectie aan.
+                    Pas de titel, het adres, de tags of de collectie aan.
                 </DialogDescription>
                 <Form
-                    key={`${resource.id}-${resource.title}-${resource.url}-${selected ?? ''}`}
+                    key={`${resource.id}-${resource.title}-${resource.url}-${selected ?? ''}-${(resource.tags ?? []).join(',')}`}
                     {...update.form(resource.id)}
                     disableWhileProcessing
                     onSuccess={() => setOpen(false)}
@@ -185,6 +207,21 @@ export function EditLinkButton({
                                     autoComplete="off"
                                 />
                                 <InputError message={errors.title} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor={`tags-${resource.id}`}>Tags</Label>
+                                <Input
+                                    id={`tags-${resource.id}`}
+                                    name="tags"
+                                    type="text"
+                                    defaultValue={(resource.tags ?? []).join(', ')}
+                                    placeholder="react, documentatie"
+                                    autoComplete="off"
+                                />
+                                <p className="text-muted-foreground text-xs">
+                                    Scheid tags met een komma.
+                                </p>
+                                <InputError message={errors.tags} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor={`collection-${resource.id}`}>Collectie</Label>
@@ -482,6 +519,7 @@ export function ResourceList({
                                                 {resource.description}
                                             </p>
                                         ) : null}
+                                        <ResourceTags tags={resource.tags} />
                                     </div>
                                 </div>
                                 <div className="mt-auto flex items-center justify-between gap-2">
