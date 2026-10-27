@@ -1,7 +1,7 @@
 import type { MouseEvent, ReactNode } from 'react';
 import { rememberOpened } from '@/lib/remember-opened';
 
-function externalHref(url: string): string {
+export function linkHref(url: string): string {
     const trimmed = url.trim();
 
     if (trimmed === '' || trimmed.startsWith('//') || /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)) {
@@ -32,7 +32,7 @@ export function OpenLink({
 
     return (
         <a
-            href={externalHref(href)}
+            href={linkHref(href)}
             target="_blank"
             rel="noreferrer"
             className={className}

@@ -8,6 +8,7 @@ import {
     IconPicker,
 } from '@/components/collection-appearance';
 import InputError from '@/components/input-error';
+import { CopyLinkButton } from '@/components/copy-link-button';
 import { OpenLink } from '@/components/open-link';
 import { DetachLinkButton, EditLinkButton, MoveLinkButtons, ResourceMark } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
@@ -208,6 +209,10 @@ function CollectionCard({
                                         className="size-7 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                                     />
                                 ) : null}
+                                <CopyLinkButton
+                                    url={link.url}
+                                    className="size-7 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                                />
                                 <EditLinkButton
                                     resource={link}
                                     collectionId={collection.id}
@@ -569,6 +574,10 @@ export function CollectionBoard({
                                         >
                                             {link.title}
                                         </OpenLink>
+                                        <CopyLinkButton
+                                            url={link.url}
+                                            className="size-7 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                                        />
                                         <EditLinkButton
                                             resource={link}
                                             collectionId={null}

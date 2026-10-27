@@ -2,6 +2,7 @@ import { Form, usePage } from '@inertiajs/react';
 import { Archive, ArchiveRestore, ChevronDown, ChevronUp, FolderMinus, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { CollectionChecks } from '@/components/collection-checks';
+import { CopyLinkButton } from '@/components/copy-link-button';
 import { OpenLink } from '@/components/open-link';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -425,6 +426,7 @@ function ResourceActions({
                     resourceTitle={resource.title}
                 />
             ) : null}
+            <CopyLinkButton url={resource.url} />
             <EditLinkButton resource={resource} />
             <Form {...favorite.form(resource.id)}>
                 <Button
