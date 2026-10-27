@@ -94,6 +94,30 @@ class DashboardLibraryTest extends TestCase
         );
     }
 
+    public function test_a_collection_keeps_the_chosen_icon_and_color(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('collections.store'), [
+            'name' => 'Design',
+            'description' => 'Inspiratie',
+            'icon' => 'palette',
+            'accent_color' => '#A855F7',
+            'show_on_home' => '1',
+        ])->assertRedirect(route('dashboard'))->assertSessionHasNoErrors();
+
+        $collection = $user->collections()->where('name', 'Design')->firstOrFail();
+        $this->assertSame('Inspiratie', $collection->description);
+        $this->assertSame('palette', $collection->icon);
+        $this->assertSame('#A855F7', $collection->accent_color);
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('collections.store'), [
+            'name' => 'Fout',
+            'icon' => 'nope',
+            'accent_color' => '#000000',
+        ])->assertSessionHasErrors(['icon', 'accent_color']);
+    }
+
     public function test_a_link_is_on_home_only_when_chosen(): void
     {
         $user = User::factory()->create();

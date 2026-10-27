@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCollectionRequest;
 use App\Models\Collection;
 use App\Models\Resource;
+use App\Support\CollectionAppearance;
 use App\Support\CollectionBoard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +26,9 @@ class CollectionController extends Controller
 
         $user->collections()->create([
             'name' => $request->string('name')->toString(),
-            'description' => '',
+            'description' => mb_substr(trim($request->string('description')->toString()), 0, 500),
+            'icon' => CollectionAppearance::icon($request->string('icon')->toString()),
+            'accent_color' => CollectionAppearance::color($request->string('accent_color')->toString()),
             'position' => $position,
             'is_pinned_to_home' => $request->boolean('show_on_home'),
         ]);
@@ -40,7 +43,7 @@ class CollectionController extends Controller
         abort_unless($collection->user_id === $request->user()->id, 404);
 
         return Inertia::render('collections/show', [
-            'collection' => $collection->only(['id', 'name', 'description', 'accent_color']),
+            'collection' => $collection->only(['id', 'name', 'description', 'icon', 'accent_color']),
             'resources' => $collection->resources()
                 ->where('resources.is_archived', false)
                 ->orderByPivot('position')

@@ -30,6 +30,7 @@ class CollectionBoard
                     'id' => $collection->id,
                     'name' => $collection->name,
                     'description' => $collection->description,
+                    'icon' => $collection->icon,
                     'accent_color' => $collection->accent_color,
                     'resources_count' => $collection->resources_count,
                     'is_pinned_to_home' => $collection->is_pinned_to_home,

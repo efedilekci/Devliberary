@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{linkCount: int, favoriteCount: int, collections: list<array{id: string, name: string, resources_count: int}>}|null
+     * @return array{linkCount: int, favoriteCount: int, collections: list<array{id: string, name: string, icon: string, accent_color: string, resources_count: int}>}|null
      */
     private function libraryNav(Request $request): ?array
     {
@@ -70,6 +70,8 @@ class HandleInertiaRequests extends Middleware
                 ->map(fn (Collection $collection) => [
                     'id' => $collection->id,
                     'name' => $collection->name,
+                    'icon' => $collection->icon,
+                    'accent_color' => $collection->accent_color,
                     'resources_count' => (int) $collection->resources_count,
                 ])
                 ->values()

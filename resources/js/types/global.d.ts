@@ -18,6 +18,8 @@ declare module '@inertiajs/core' {
                 collections: Array<{
                     id: string;
                     name: string;
+                    icon: string;
+                    accent_color: string;
                     resources_count: number;
                 }>;
             } | null;

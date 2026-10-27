@@ -1,7 +1,12 @@
 import { Form, Link } from '@inertiajs/react';
 import { MoreHorizontal, Plus, Star } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AddLinkDialog } from '@/components/add-link-dialog';
+import {
+    CollectionGlyph,
+    ColorSwatches,
+    IconPicker,
+} from '@/components/collection-appearance';
 import InputError from '@/components/input-error';
 import { EditLinkButton, ResourceMark } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
@@ -46,6 +51,7 @@ export type CollectionItem = {
     id: string;
     name: string;
     description: string;
+    icon: string;
     accent_color: string;
     resources_count: number;
     is_pinned_to_home: boolean;
@@ -69,10 +75,7 @@ function CollectionCard({
     return (
         <article className="bg-card/60 flex min-w-0 flex-col overflow-hidden rounded-xl border">
             <header className="flex items-center gap-2 px-3 py-2.5">
-                <span
-                    className="size-2.5 shrink-0 rounded-[3px]"
-                    style={{ backgroundColor: collection.accent_color }}
-                />
+                <CollectionGlyph name={collection.icon} color={collection.accent_color} />
                 <Link
                     href={showCollection(collection.id)}
                     className="min-w-0 flex-1 truncate text-sm font-medium"
@@ -204,16 +207,31 @@ export function CollectionDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const [icon, setIcon] = useState('folder');
+    const [color, setColor] = useState('#F97316');
+    const [formKey, setFormKey] = useState(0);
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        setIcon('folder');
+        setColor('#F97316');
+        setFormKey((key) => key + 1);
+    }, [open]);
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent className="max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Collectie maken</DialogTitle>
                     <DialogDescription>
-                        Geef de collectie een naam en kies of hij op home staat.
+                        Geef de collectie een naam, een icoon en een kleur.
                     </DialogDescription>
                 </DialogHeader>
                 <Form
+                    key={formKey}
                     {...storeCollection.form()}
                     resetOnSuccess
                     disableWhileProcessing
@@ -229,10 +247,39 @@ export function CollectionDialog({
                                     name="name"
                                     type="text"
                                     required
-                                    placeholder="Bijvoorbeeld Laravel"
+                                    placeholder="Bijvoorbeeld Design"
                                     autoComplete="off"
                                 />
                                 <InputError message={errors.name} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="description">Beschrijving</Label>
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    rows={3}
+                                    maxLength={500}
+                                    placeholder="Wat hoort hier?"
+                                    className="border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                                />
+                                <InputError message={errors.description} />
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="icon" className="md:hidden">
+                                        Icoon
+                                    </Label>
+                                    <Label htmlFor="icon-desktop" className="hidden md:inline">
+                                        Icoon
+                                    </Label>
+                                    <IconPicker value={icon} color={color} onChange={setIcon} />
+                                    <InputError message={errors.icon} />
+                                </div>
+                                <div className="grid content-start gap-2">
+                                    <Label>Kleur</Label>
+                                    <ColorSwatches value={color} onChange={setColor} />
+                                    <InputError message={errors.accent_color} />
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <input type="hidden" name="show_on_home" value="0" />

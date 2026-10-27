@@ -37,7 +37,13 @@ export function NavMain({
                             }
                         >
                             <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
+                                {item.icon && (
+                                    <item.icon
+                                        style={
+                                            item.iconColor ? { color: item.iconColor } : undefined
+                                        }
+                                    />
+                                )}
                                 <span>{item.title}</span>
                             </Link>
                         </SidebarMenuButton>

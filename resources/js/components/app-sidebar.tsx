@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Archive, Code, Folder, Folders, Layers, LayoutGrid, Star } from 'lucide-react';
+import { Archive, Code, Folders, Layers, LayoutGrid, Star } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -13,6 +13,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { collectionIcon } from '@/components/collection-appearance';
 import { dashboard } from '@/routes';
 import { index as collectionsIndex, show as showCollection } from '@/routes/collections';
 import { index as snippets } from '@/routes/snippets';
@@ -89,7 +90,8 @@ export function AppSidebar() {
         (collection) => ({
             title: collection.name,
             href: showCollection(collection.id),
-            icon: Folder,
+            icon: collectionIcon(collection.icon),
+            iconColor: collection.accent_color,
             badge: collection.resources_count,
         }),
     );

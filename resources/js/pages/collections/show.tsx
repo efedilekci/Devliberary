@@ -1,4 +1,5 @@
 import { Head } from '@inertiajs/react';
+import { CollectionGlyph } from '@/components/collection-appearance';
 import {
     LinkViewToggle,
     ResourceList,
@@ -12,6 +13,7 @@ type CollectionItem = {
     id: string;
     name: string;
     description: string;
+    icon: string;
     accent_color: string;
 };
 
@@ -35,7 +37,14 @@ export default function CollectionShow({
                         borderTopWidth: 3,
                     }}
                 >
-                    <h1 className="text-xl font-medium">{collection.name}</h1>
+                    <h1 className="flex items-center gap-2 text-xl font-medium">
+                        <CollectionGlyph
+                            name={collection.icon}
+                            color={collection.accent_color}
+                            className="size-5 shrink-0"
+                        />
+                        {collection.name}
+                    </h1>
                     {collection.description !== '' && (
                         <p className="text-muted-foreground mt-1 text-sm">
                             {collection.description}
