@@ -1,5 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
-import { FolderPlus, MoreHorizontal, Plus, Star } from 'lucide-react';
+import { MoreHorizontal, Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 import { AddLinkDialog } from '@/components/add-link-dialog';
 import InputError from '@/components/input-error';
@@ -313,58 +313,26 @@ export function CollectionBoard({
 
     return (
         <section className="grid gap-4">
-            <div
-                className={
-                    onHome
-                        ? 'flex flex-wrap items-center justify-end gap-2'
-                        : 'flex flex-wrap items-end justify-between gap-3 border-b'
-                }
-            >
-                {!onHome && (
+            {!onHome && (
+                <div className="flex flex-wrap items-end justify-between gap-3 border-b">
                     <h2 className="border-primary border-b-2 px-1 pb-2 text-sm font-medium">
                         Jouw collecties
                     </h2>
-                )}
-                <div
-                    className={
-                        onHome
-                            ? 'flex flex-wrap items-center gap-2'
-                            : 'mb-2 flex flex-wrap items-center gap-2'
-                    }
-                >
-                    {!onHome && (
-                        <>
-                            <label htmlFor="collection-filter" className="sr-only">
-                                Filter collecties
-                            </label>
-                            <Input
-                                id="collection-filter"
-                                type="search"
-                                value={filter}
-                                onChange={(event) => setFilter(event.target.value)}
-                                placeholder="Filter collecties"
-                                className="h-8 w-44"
-                            />
-                        </>
-                    )}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                            setLinkCollectionId(null);
-                            setLinkOpen(true);
-                        }}
-                    >
-                        <Plus />
-                        Link toevoegen
-                    </Button>
-                    <Button type="button" size="sm" onClick={() => setCollectionOpen(true)}>
-                        <FolderPlus />
-                        Collectie maken
-                    </Button>
+                    <div className="mb-2">
+                        <label htmlFor="collection-filter" className="sr-only">
+                            Filter collecties
+                        </label>
+                        <Input
+                            id="collection-filter"
+                            type="search"
+                            value={filter}
+                            onChange={(event) => setFilter(event.target.value)}
+                            placeholder="Filter collecties"
+                            className="h-8 w-44"
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
             <AddLinkDialog
                 collections={collections}
                 open={linkOpen}

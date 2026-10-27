@@ -1,6 +1,9 @@
 import { router, usePage } from '@inertiajs/react';
-import type { FormEvent } from 'react';
+import { FolderPlus, Plus } from 'lucide-react';
+import { type FormEvent, useState } from 'react';
+import { AddLinkDialog } from '@/components/add-link-dialog';
 import { Breadcrumbs } from '@/components/breadcrumbs';
+import { CollectionDialog } from '@/components/collection-board';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -13,13 +16,23 @@ function searchQuery(url: string): string {
     return new URLSearchParams(query).get('q') ?? '';
 }
 
+function collectionIdFromUrl(url: string): string | null {
+    const match = url.split('?')[0].match(/^\/collections\/([^/]+)$/);
+
+    return match ? match[1] : null;
+}
+
 export function AppSidebarHeader({
     breadcrumbs = [],
 }: {
     breadcrumbs?: BreadcrumbItemType[];
 }) {
-    const { url } = usePage();
+    const { url, props } = usePage();
     const query = searchQuery(url);
+    const [linkOpen, setLinkOpen] = useState(false);
+    const [collectionOpen, setCollectionOpen] = useState(false);
+    const collections = props.libraryNav?.collections ?? [];
+    const linkCollectionId = collectionIdFromUrl(url);
 
     function search(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -32,15 +45,31 @@ export function AppSidebarHeader({
     }
 
     return (
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/50 px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
+        <header className="flex min-h-16 shrink-0 flex-wrap items-center gap-2 border-b border-sidebar-border/50 px-6 py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:min-h-12 md:px-4">
             <div className="flex min-w-0 items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
-            <form
-                onSubmit={search}
-                className="ml-auto flex min-w-0 flex-1 items-center gap-2 sm:max-w-xs sm:flex-none"
-            >
+            <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setLinkOpen(true)}>
+                    <Plus />
+                    Link toevoegen
+                </Button>
+                <Button type="button" size="sm" onClick={() => setCollectionOpen(true)}>
+                    <FolderPlus />
+                    Collectie maken
+                </Button>
+                <AddLinkDialog
+                    collections={collections}
+                    open={linkOpen}
+                    collectionId={linkCollectionId}
+                    onOpenChange={setLinkOpen}
+                />
+                <CollectionDialog open={collectionOpen} onOpenChange={setCollectionOpen} />
+                <form
+                    onSubmit={search}
+                    className="flex min-w-0 items-center gap-2 sm:max-w-xs"
+                >
                 <label htmlFor="library-search" className="sr-only">
                     Zoek links
                 </label>
@@ -58,6 +87,7 @@ export function AppSidebarHeader({
                     Zoeken
                 </Button>
             </form>
+            </div>
         </header>
     );
 }
