@@ -5,6 +5,7 @@ namespace Tests\Feature\Library;
 use App\Models\Collection;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class CollectionOrganizeTest extends TestCase
@@ -45,7 +46,11 @@ class CollectionOrganizeTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSeeInOrder(['Beta', 'Niet op het dashboard', 'Alfa']);
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('collections.0.name', 'Beta')
+                ->where('collections.0.is_pinned_to_home', true)
+                ->where('collections.1.name', 'Alfa')
+                ->where('collections.1.is_pinned_to_home', false));
     }
 
     public function test_moving_the_first_collection_up_keeps_the_order(): void

@@ -58,6 +58,24 @@ class ResourceController extends Controller
         return back();
     }
 
+    public function archive(Request $request, Resource $resource): RedirectResponse
+    {
+        abort_unless($resource->user_id === $request->user()->id, 404);
+
+        $archived = ! $resource->is_archived;
+
+        $resource->update([
+            'is_archived' => $archived,
+        ]);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $archived ? 'Link gearchiveerd.' : 'Link teruggezet.',
+        ]);
+
+        return back();
+    }
+
     public function destroy(Request $request, Resource $resource): RedirectResponse
     {
         abort_unless($resource->user_id === $request->user()->id, 404);

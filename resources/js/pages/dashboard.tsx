@@ -123,9 +123,11 @@ function CollectionCard({
 export default function Dashboard({
     collections,
     resources,
+    linkFilter,
 }: {
     collections: CollectionItem[];
     resources: ResourceItem[];
+    linkFilter: 'active' | 'favorites' | 'archived';
 }) {
     const pinned = collections.filter((collection) => collection.is_pinned_to_home);
     const unpinned = collections.filter(
@@ -280,10 +282,52 @@ export default function Dashboard({
                 </section>
 
                 <section className="grid gap-3">
-                    <h2 className="text-sm font-medium">Links</h2>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <h2 className="text-sm font-medium">Links</h2>
+                        <div className="flex gap-3">
+                            {(
+                                [
+                                    ['active', 'Alles', dashboard()],
+                                    [
+                                        'favorites',
+                                        'Favorieten',
+                                        dashboard.url({
+                                            query: { links: 'favorites' },
+                                        }),
+                                    ],
+                                    [
+                                        'archived',
+                                        'Archief',
+                                        dashboard.url({
+                                            query: { links: 'archived' },
+                                        }),
+                                    ],
+                                ] as const
+                            ).map(([key, label, href]) => (
+                                <Link
+                                    key={key}
+                                    href={href}
+                                    aria-current={
+                                        linkFilter === key ? 'page' : undefined
+                                    }
+                                    className={
+                                        linkFilter === key
+                                            ? 'text-sm font-medium'
+                                            : 'text-muted-foreground text-sm'
+                                    }
+                                >
+                                    {label}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
                     {resources.length === 0 ? (
                         <p className="text-muted-foreground text-sm">
-                            Nog geen links.
+                            {linkFilter === 'favorites'
+                                ? 'Nog geen favorieten.'
+                                : linkFilter === 'archived'
+                                  ? 'Het archief is leeg.'
+                                  : 'Nog geen links.'}
                         </p>
                     ) : (
                         <ResourceList resources={resources} />

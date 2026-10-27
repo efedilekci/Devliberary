@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { Link2, Star, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, Link2, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { destroy, favorite } from '@/routes/resources';
+import { archive, destroy, favorite } from '@/routes/resources';
 
 export type LibraryResource = {
     id: string;
@@ -19,6 +19,7 @@ export type LibraryResource = {
     url: string;
     favicon_url: string;
     is_favorite: boolean;
+    is_archived: boolean;
 };
 
 function ResourceMark({ url }: { url: string }) {
@@ -88,6 +89,24 @@ export function ResourceList({ resources }: { resources: LibraryResource[] }) {
                                             : undefined
                                     }
                                 />
+                            </Button>
+                        </Form>
+                        <Form {...archive.form(resource.id)}>
+                            <Button
+                                type="submit"
+                                variant="ghost"
+                                size="icon"
+                                aria-label={
+                                    resource.is_archived
+                                        ? 'Terugzetten'
+                                        : 'Archiveren'
+                                }
+                            >
+                                {resource.is_archived ? (
+                                    <ArchiveRestore />
+                                ) : (
+                                    <Archive />
+                                )}
                             </Button>
                         </Form>
                         <Dialog>

@@ -36,7 +36,7 @@ class CollectionController extends Controller
             'resources' => $collection->resources()
                 ->where('resources.is_archived', false)
                 ->orderByPivot('position')
-                ->get(['resources.id', 'resources.title', 'resources.url', 'resources.favicon_url', 'resources.is_favorite']),
+                ->get(['resources.id', 'resources.title', 'resources.url', 'resources.favicon_url', 'resources.is_favorite', 'resources.is_archived']),
         ]);
     }
 
