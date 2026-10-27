@@ -1,6 +1,6 @@
 import { Form, Link } from '@inertiajs/react';
 import { MoreHorizontal, Plus, Star } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AddLinkDialog } from '@/components/add-link-dialog';
 import {
     CollectionGlyph,
@@ -34,6 +34,7 @@ import {
     pin as pinCollection,
     show as showCollection,
     store as storeCollection,
+    update as updateCollection,
 } from '@/routes/collections';
 import { favorite as favoriteResource } from '@/routes/resources';
 
@@ -45,6 +46,15 @@ export type CollectionLink = {
     is_favorite: boolean;
     show_on_home: boolean;
     tags?: string[];
+};
+
+export type EditableCollection = {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    accent_color: string;
+    is_pinned_to_home: boolean;
 };
 
 export type CollectionItem = {
@@ -64,11 +74,13 @@ function CollectionCard({
     index,
     total,
     onAddLink,
+    onEdit,
 }: {
     collection: CollectionItem;
     index: number;
     total: number;
     onAddLink: (collectionId: string) => void;
+    onEdit: (collection: CollectionItem) => void;
 }) {
     const hidden = Math.max(collection.resources_count - collection.links.length, 0);
 
@@ -106,6 +118,9 @@ function CollectionCard({
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => onEdit(collection)}>
+                                Bewerken
+                            </DropdownMenuItem>
                             <Form {...pinCollection.form(collection.id)}>
                                 <DropdownMenuItem asChild>
                                     <button type="submit" className="w-full">
@@ -203,36 +218,40 @@ function CollectionCard({
 export function CollectionDialog({
     open,
     onOpenChange,
+    collection = null,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    collection?: EditableCollection | null;
 }) {
-    const [icon, setIcon] = useState('folder');
-    const [color, setColor] = useState('#F97316');
+    const editing = collection !== null;
+    const sourceId = open ? (collection?.id ?? 'new') : 'closed';
+    const [trackedId, setTrackedId] = useState(sourceId);
+    const [icon, setIcon] = useState(collection?.icon ?? 'folder');
+    const [color, setColor] = useState(collection?.accent_color ?? '#F97316');
     const [formKey, setFormKey] = useState(0);
 
-    useEffect(() => {
-        if (!open) {
-            return;
-        }
-
-        setIcon('folder');
-        setColor('#F97316');
+    if (trackedId !== sourceId) {
+        setTrackedId(sourceId);
+        setIcon(collection?.icon ?? 'folder');
+        setColor(collection?.accent_color ?? '#F97316');
         setFormKey((key) => key + 1);
-    }, [open]);
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Collectie maken</DialogTitle>
+                    <DialogTitle>{editing ? 'Collectie bewerken' : 'Collectie maken'}</DialogTitle>
                     <DialogDescription>
-                        Geef de collectie een naam, een icoon en een kleur.
+                        {editing
+                            ? 'Pas de naam, het icoon en de kleur aan.'
+                            : 'Geef de collectie een naam, een icoon en een kleur.'}
                     </DialogDescription>
                 </DialogHeader>
                 <Form
                     key={formKey}
-                    {...storeCollection.form()}
+                    {...(editing ? updateCollection.form(collection.id) : storeCollection.form())}
                     resetOnSuccess
                     disableWhileProcessing
                     onSuccess={() => onOpenChange(false)}
@@ -247,6 +266,7 @@ export function CollectionDialog({
                                     name="name"
                                     type="text"
                                     required
+                                    defaultValue={collection?.name ?? ''}
                                     placeholder="Bijvoorbeeld Design"
                                     autoComplete="off"
                                 />
@@ -259,6 +279,7 @@ export function CollectionDialog({
                                     name="description"
                                     rows={3}
                                     maxLength={500}
+                                    defaultValue={collection?.description ?? ''}
                                     placeholder="Wat hoort hier?"
                                     className="border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm"
                                 />
@@ -288,7 +309,7 @@ export function CollectionDialog({
                                     name="show_on_home"
                                     type="checkbox"
                                     value="1"
-                                    defaultChecked
+                                    defaultChecked={collection ? collection.is_pinned_to_home : true}
                                     className="accent-primary size-4"
                                 />
                                 <Label htmlFor="show_on_home">Tonen op home</Label>
@@ -301,7 +322,7 @@ export function CollectionDialog({
                                 </DialogClose>
                                 <Button type="submit" disabled={processing}>
                                     {processing && <Spinner />}
-                                    Collectie aanmaken
+                                    {editing ? 'Opslaan' : 'Collectie aanmaken'}
                                 </Button>
                             </DialogFooter>
                         </>
@@ -344,6 +365,7 @@ export function CollectionBoard({
     const [linkOpen, setLinkOpen] = useState(false);
     const [linkCollectionId, setLinkCollectionId] = useState<string | null>(null);
     const [collectionOpen, setCollectionOpen] = useState(false);
+    const [editing, setEditing] = useState<CollectionItem | null>(null);
     const needle = onHome ? '' : filter.trim().toLocaleLowerCase('nl');
     const pool = onHome
         ? collections.filter((collection) => collection.is_pinned_to_home)
@@ -386,7 +408,17 @@ export function CollectionBoard({
                 collectionId={linkCollectionId}
                 onOpenChange={setLinkOpen}
             />
-            <CollectionDialog open={collectionOpen} onOpenChange={setCollectionOpen} />
+            <CollectionDialog
+                open={collectionOpen}
+                collection={editing}
+                onOpenChange={(open) => {
+                    setCollectionOpen(open);
+
+                    if (!open) {
+                        setEditing(null);
+                    }
+                }}
+            />
             {onHome && visible.length === 0 && (
                 <p className="text-muted-foreground text-sm">Nog geen collecties op home.</p>
             )}
@@ -414,6 +446,10 @@ export function CollectionBoard({
                                 onAddLink={(collectionId) => {
                                     setLinkCollectionId(collectionId);
                                     setLinkOpen(true);
+                                }}
+                                onEdit={(item) => {
+                                    setEditing(item);
+                                    setCollectionOpen(true);
                                 }}
                             />
                         );
@@ -475,7 +511,10 @@ export function CollectionBoard({
                     )}
                     <button
                         type="button"
-                        onClick={() => setCollectionOpen(true)}
+                        onClick={() => {
+                            setEditing(null);
+                            setCollectionOpen(true);
+                        }}
                         className="text-muted-foreground hover:bg-muted/40 flex min-h-36 flex-col items-center justify-center gap-1 rounded-xl border border-dashed p-4 text-center"
                     >
                         <span className="text-foreground text-sm font-medium">

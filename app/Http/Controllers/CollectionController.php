@@ -38,12 +38,40 @@ class CollectionController extends Controller
         return back();
     }
 
+    public function update(StoreCollectionRequest $request, Collection $collection): RedirectResponse
+    {
+        abort_unless($collection->user_id === $request->user()->id, 404);
+
+        $pinned = $request->boolean('show_on_home');
+        $attributes = [
+            'name' => $request->string('name')->toString(),
+            'description' => mb_substr(trim($request->string('description')->toString()), 0, 500),
+            'icon' => CollectionAppearance::icon($request->string('icon')->toString()),
+            'accent_color' => CollectionAppearance::color($request->string('accent_color')->toString()),
+            'is_pinned_to_home' => $pinned,
+        ];
+
+        if ($pinned !== $collection->is_pinned_to_home) {
+            $max = $request->user()->collections()
+                ->where('is_pinned_to_home', $pinned)
+                ->max('position');
+
+            $attributes['position'] = $max === null ? 0 : ((int) $max) + 1;
+        }
+
+        $collection->update($attributes);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Collectie bijgewerkt.']);
+
+        return back();
+    }
+
     public function show(Request $request, Collection $collection): Response
     {
         abort_unless($collection->user_id === $request->user()->id, 404);
 
         return Inertia::render('collections/show', [
-            'collection' => $collection->only(['id', 'name', 'description', 'icon', 'accent_color']),
+            'collection' => $collection->only(['id', 'name', 'description', 'icon', 'accent_color', 'is_pinned_to_home']),
             'resources' => $collection->resources()
                 ->where('resources.is_archived', false)
                 ->orderByPivot('position')

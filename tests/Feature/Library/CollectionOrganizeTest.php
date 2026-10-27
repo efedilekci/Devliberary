@@ -72,6 +72,73 @@ class CollectionOrganizeTest extends TestCase
         $this->assertSame(0, $first->refresh()->position);
     }
 
+    public function test_the_owner_can_update_the_name_icon_and_color(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create([
+            'name' => 'Notities',
+            'description' => '',
+            'icon' => 'folder',
+            'accent_color' => '#F97316',
+            'is_pinned_to_home' => true,
+            'position' => 0,
+        ]);
+        Collection::factory()->for($user)->create([
+            'name' => 'Los',
+            'is_pinned_to_home' => false,
+            'position' => 0,
+        ]);
+
+        $this->actingAs($user)->from(route('dashboard'))->patch(route('collections.update', $collection), [
+            'name' => 'Design',
+            'description' => 'Inspiratie',
+            'icon' => 'palette',
+            'accent_color' => '#A855F7',
+            'show_on_home' => '0',
+        ])->assertRedirect(route('dashboard'))->assertSessionHasNoErrors();
+
+        $collection->refresh();
+        $this->assertSame('Design', $collection->name);
+        $this->assertSame('Inspiratie', $collection->description);
+        $this->assertSame('palette', $collection->icon);
+        $this->assertSame('#A855F7', $collection->accent_color);
+        $this->assertFalse($collection->is_pinned_to_home);
+        $this->assertSame(1, $collection->position);
+    }
+
+    public function test_an_update_rejects_an_unknown_icon_and_color(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create(['name' => 'Notities']);
+
+        $this->actingAs($user)->from(route('dashboard'))->patch(route('collections.update', $collection), [
+            'name' => 'Fout',
+            'icon' => 'nope',
+            'accent_color' => '#000000',
+        ])->assertSessionHasErrors(['icon', 'accent_color']);
+
+        $this->assertSame('Notities', $collection->fresh()->name);
+    }
+
+    public function test_another_user_cannot_update_a_collection(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $collection = Collection::factory()->for($owner)->create(['name' => 'Notities']);
+
+        $this->actingAs($other)
+            ->patch(route('collections.update', $collection), [
+                'name' => 'Gestolen',
+                'icon' => 'rocket',
+                'accent_color' => '#3B82F6',
+                'show_on_home' => '0',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame('Notities', $collection->fresh()->name);
+        $this->assertTrue($collection->fresh()->is_pinned_to_home);
+    }
+
     public function test_another_user_cannot_organize_a_collection(): void
     {
         $owner = User::factory()->create();

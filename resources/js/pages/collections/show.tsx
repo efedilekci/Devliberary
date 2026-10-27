@@ -1,10 +1,13 @@
 import { Head } from '@inertiajs/react';
+import { useState } from 'react';
 import { CollectionGlyph } from '@/components/collection-appearance';
+import { CollectionDialog } from '@/components/collection-board';
 import {
     LinkViewToggle,
     ResourceList,
     type LibraryResource,
 } from '@/components/resource-list';
+import { Button } from '@/components/ui/button';
 import { useLinkView } from '@/hooks/use-link-view';
 import { dashboard } from '@/routes';
 import { index as collectionsIndex } from '@/routes/collections';
@@ -15,6 +18,7 @@ type CollectionItem = {
     description: string;
     icon: string;
     accent_color: string;
+    is_pinned_to_home: boolean;
 };
 
 export default function CollectionShow({
@@ -25,6 +29,7 @@ export default function CollectionShow({
     resources: LibraryResource[];
 }) {
     const [linkView, setLinkView] = useLinkView();
+    const [editOpen, setEditOpen] = useState(false);
 
     return (
         <>
@@ -37,14 +42,29 @@ export default function CollectionShow({
                         borderTopWidth: 3,
                     }}
                 >
-                    <h1 className="flex items-center gap-2 text-xl font-medium">
-                        <CollectionGlyph
-                            name={collection.icon}
-                            color={collection.accent_color}
-                            className="size-5 shrink-0"
-                        />
-                        {collection.name}
-                    </h1>
+                    <div className="flex items-start justify-between gap-3">
+                        <h1 className="flex min-w-0 items-center gap-2 text-xl font-medium">
+                            <CollectionGlyph
+                                name={collection.icon}
+                                color={collection.accent_color}
+                                className="size-5 shrink-0"
+                            />
+                            <span className="truncate">{collection.name}</span>
+                        </h1>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditOpen(true)}
+                        >
+                            Bewerken
+                        </Button>
+                    </div>
+                    <CollectionDialog
+                        open={editOpen}
+                        collection={collection}
+                        onOpenChange={setEditOpen}
+                    />
                     {collection.description !== '' && (
                         <p className="text-muted-foreground mt-1 text-sm">
                             {collection.description}
