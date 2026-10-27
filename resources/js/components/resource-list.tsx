@@ -42,6 +42,7 @@ export type LibraryResource = {
     tags?: string[];
     is_favorite: boolean;
     is_archived: boolean;
+    show_on_home?: boolean;
     collection_id?: string | null;
 };
 
@@ -150,6 +151,7 @@ export function EditLinkButton({
         title: string;
         url: string;
         tags?: string[];
+        show_on_home?: boolean;
         collection_id?: string | null;
     };
     collectionId?: string | null;
@@ -180,7 +182,7 @@ export function EditLinkButton({
                     Pas de titel, het adres, de tags of de collectie aan.
                 </DialogDescription>
                 <Form
-                    key={`${resource.id}-${resource.title}-${resource.url}-${selected ?? ''}-${(resource.tags ?? []).join(',')}`}
+                    key={`${resource.id}-${resource.title}-${resource.url}-${selected ?? ''}-${(resource.tags ?? []).join(',')}-${resource.show_on_home ? '1' : '0'}`}
                     {...update.form(resource.id)}
                     disableWhileProcessing
                     onSuccess={() => setOpen(false)}
@@ -243,6 +245,18 @@ export function EditLinkButton({
                                     ))}
                                 </select>
                                 <InputError message={errors.collection_id} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input type="hidden" name="show_on_home" value="0" />
+                                <input
+                                    id={`show-on-home-${resource.id}`}
+                                    name="show_on_home"
+                                    type="checkbox"
+                                    value="1"
+                                    defaultChecked={resource.show_on_home !== false}
+                                    className="accent-primary size-4"
+                                />
+                                <Label htmlFor={`show-on-home-${resource.id}`}>Tonen op home</Label>
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild>

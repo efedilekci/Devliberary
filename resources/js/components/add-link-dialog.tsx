@@ -267,6 +267,18 @@ export function AddLinkDialog({
                                 </select>
                                 <InputError message={errors.collection_id} />
                             </div>
+                            <div className="flex items-center gap-2">
+                                <input type="hidden" name="show_on_home" value="0" />
+                                <input
+                                    id="link-show-on-home"
+                                    name="show_on_home"
+                                    type="checkbox"
+                                    value="1"
+                                    defaultChecked
+                                    className="accent-primary size-4"
+                                />
+                                <Label htmlFor="link-show-on-home">Tonen op home</Label>
+                            </div>
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary">

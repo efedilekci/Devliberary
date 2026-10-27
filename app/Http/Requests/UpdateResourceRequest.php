@@ -52,6 +52,7 @@ class UpdateResourceRequest extends FormRequest
                 'uuid',
                 Rule::exists(Collection::class, 'id')->where('user_id', $this->user()->id),
             ],
+            'show_on_home' => ['sometimes', 'boolean'],
         ];
     }
 

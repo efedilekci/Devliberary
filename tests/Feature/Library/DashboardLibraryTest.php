@@ -94,6 +94,27 @@ class DashboardLibraryTest extends TestCase
         );
     }
 
+    public function test_a_link_is_on_home_only_when_chosen(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
+            'url' => 'https://example.com',
+            'title' => 'Example',
+            'show_on_home' => '0',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertFalse($user->resources()->where('title', 'Example')->firstOrFail()->show_on_home);
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
+            'url' => 'https://laravel.com',
+            'title' => 'Laravel',
+            'show_on_home' => '1',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertTrue($user->resources()->where('title', 'Laravel')->firstOrFail()->show_on_home);
+    }
+
     public function test_a_user_cannot_file_a_link_in_someone_elses_collection(): void
     {
         $user = User::factory()->create();

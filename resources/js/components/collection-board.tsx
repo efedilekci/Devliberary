@@ -38,6 +38,7 @@ export type CollectionLink = {
     url: string;
     favicon_url: string;
     is_favorite: boolean;
+    show_on_home: boolean;
     tags?: string[];
 };
 
@@ -306,6 +307,9 @@ export function CollectionBoard({
             : pool.filter((collection) =>
                   collection.name.toLocaleLowerCase('nl').includes(needle),
               );
+    const loose = onHome
+        ? uncollected.filter((link) => link.show_on_home)
+        : uncollected;
 
     return (
         <section className="grid gap-4">
@@ -381,14 +385,22 @@ export function CollectionBoard({
             ) : (
                 <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {visible.map((collection) => {
-                        const place = groupPlace(collection, collections);
+                        const spot = groupPlace(collection, collections);
+                        const card = onHome
+                            ? {
+                                  ...collection,
+                                  links: collection.links.filter((link) => link.show_on_home),
+                                  resources_count: collection.links.filter((link) => link.show_on_home)
+                                      .length,
+                              }
+                            : collection;
 
                         return (
                             <CollectionCard
                                 key={collection.id}
-                                collection={collection}
-                                index={place.index}
-                                total={place.total}
+                                collection={card}
+                                index={spot.index}
+                                total={spot.total}
                                 onAddLink={(collectionId) => {
                                     setLinkCollectionId(collectionId);
                                     setLinkOpen(true);
@@ -396,7 +408,7 @@ export function CollectionBoard({
                             />
                         );
                     })}
-                    {uncollected.length > 0 && needle === '' && (
+                    {loose.length > 0 && needle === '' && (
                         <article className="bg-card/60 flex min-w-0 flex-col overflow-hidden rounded-xl border">
                             <header className="flex items-center gap-2 px-3 py-2.5">
                                 <span className="bg-muted-foreground/40 size-2.5 shrink-0 rounded-[3px]" />
@@ -404,11 +416,11 @@ export function CollectionBoard({
                                     Zonder collectie
                                 </h3>
                                 <span className="text-muted-foreground text-xs">
-                                    {linkLabel(uncollected.length)}
+                                    {linkLabel(loose.length)}
                                 </span>
                             </header>
                             <ul className="grid min-w-0 gap-0.5 px-1.5 pb-2">
-                                {uncollected.map((link) => (
+                                {loose.map((link) => (
                                     <li
                                         key={link.id}
                                         className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1"

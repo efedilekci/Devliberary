@@ -42,7 +42,7 @@ class DashboardController extends Controller
             'resources' => $resources
                 ->with('collections:id')
                 ->limit(30)
-                ->get(['id', 'title', 'url', 'description', 'favicon_url', 'preview_image_url', 'is_favorite', 'is_archived', 'tags', 'created_at'])
+                ->get(['id', 'title', 'url', 'description', 'favicon_url', 'preview_image_url', 'is_favorite', 'is_archived', 'show_on_home', 'tags', 'created_at'])
                 ->map(fn (Resource $resource) => [
                     'id' => $resource->id,
                     'title' => $resource->title,
@@ -53,6 +53,7 @@ class DashboardController extends Controller
                     'tags' => $resource->tags,
                     'is_favorite' => $resource->is_favorite,
                     'is_archived' => $resource->is_archived,
+                    'show_on_home' => $resource->show_on_home,
                     'created_at' => $resource->created_at,
                     'collection_id' => $resource->collections->first()?->id,
                 ])

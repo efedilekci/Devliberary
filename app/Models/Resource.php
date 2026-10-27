@@ -27,6 +27,7 @@ use Illuminate\Support\Carbon;
  * @property list<string> $tags
  * @property bool $is_favorite
  * @property bool $is_archived
+ * @property bool $show_on_home
  * @property Carbon|null $last_opened_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -51,6 +52,7 @@ class Resource extends Model
         'tags',
         'is_favorite',
         'is_archived',
+        'show_on_home',
         'last_opened_at',
     ];
 
@@ -110,6 +112,7 @@ class Resource extends Model
             'tags' => 'array',
             'is_favorite' => 'boolean',
             'is_archived' => 'boolean',
+            'show_on_home' => 'boolean',
             'last_opened_at' => 'datetime',
         ];
     }

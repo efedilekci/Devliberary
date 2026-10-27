@@ -28,6 +28,7 @@ class ResourceFactory extends Factory
             'tags' => [],
             'is_favorite' => false,
             'is_archived' => false,
+            'show_on_home' => true,
         ];
     }
 }

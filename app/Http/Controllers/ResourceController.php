@@ -46,6 +46,9 @@ class ResourceController extends Controller
             'preview_image_url' => $metadata->previewImageUrl,
             'notes' => '',
             'tags' => TagList::parse($request->string('tags')->toString()),
+            'show_on_home' => $request->exists('show_on_home')
+                ? $request->boolean('show_on_home')
+                : true,
         ]);
 
         if ($request->filled('collection_id')) {
@@ -93,6 +96,10 @@ class ResourceController extends Controller
             'title' => mb_substr($request->string('title')->toString(), 0, 200),
             'tags' => TagList::parse($request->string('tags')->toString()),
         ];
+
+        if ($request->exists('show_on_home')) {
+            $attributes['show_on_home'] = $request->boolean('show_on_home');
+        }
 
         $missingPreview = $resource->description === '' && $resource->preview_image_url === '';
 
