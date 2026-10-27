@@ -35,7 +35,7 @@ export default function Dashboard({
         search !== ''
             ? 'Zoekresultaten'
             : {
-                  active: 'Dashboard',
+                  active: 'Home',
                   all: 'Alle links',
                   favorites: 'Favorieten',
                   archived: 'Archief',
@@ -108,7 +108,7 @@ export default function Dashboard({
 Dashboard.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
+            title: 'Home',
             href: dashboard(),
         },
     ],

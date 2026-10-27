@@ -78,7 +78,7 @@ export default function CollectionShow({
 CollectionShow.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
+            title: 'Home',
             href: dashboard(),
         },
         {

@@ -49,7 +49,7 @@ export default function Welcome() {
                                     className="border-white/10 bg-white/10 text-white hover:bg-white/15"
                                 >
                                     <Link href={dashboard()} prefetch>
-                                        Dashboard
+                                        Home
                                     </Link>
                                 </Button>
                             ) : (
@@ -97,7 +97,7 @@ export default function Welcome() {
                                         className="rounded-full bg-[#60A5FA] px-8 text-[#030509] hover:bg-blue-300"
                                     >
                                         <Link href={dashboard()} prefetch>
-                                            Naar dashboard
+                                            Naar home
                                             <ArrowRight className="size-4" />
                                         </Link>
                                     </Button>

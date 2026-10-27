@@ -106,8 +106,8 @@ function CollectionCard({
                                 <DropdownMenuItem asChild>
                                     <button type="submit" className="w-full">
                                         {collection.is_pinned_to_home
-                                            ? 'Losmaken van het dashboard'
-                                            : 'Vastzetten op het dashboard'}
+                                            ? 'Niet meer op home'
+                                            : 'Op home zetten'}
                                     </button>
                                 </DropdownMenuItem>
                             </Form>
