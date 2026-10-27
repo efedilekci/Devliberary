@@ -16,18 +16,27 @@ class DashboardController extends Controller
         $linkFilter = $request->string('links')->toString();
         $search = mb_substr(trim($request->string('q')->toString()), 0, 200);
 
-        if (! in_array($linkFilter, ['all', 'favorites', 'archived'], true)) {
+        if (! in_array($linkFilter, ['all', 'favorites', 'archived', 'recent'], true)) {
             $linkFilter = 'active';
         }
 
-        $resources = $user->resources()->latest();
+        $resources = $user->resources();
 
-        if ($linkFilter === 'favorites') {
-            $resources->where('is_archived', false)->where('is_favorite', true);
-        } elseif ($linkFilter === 'archived') {
-            $resources->where('is_archived', true);
+        if ($linkFilter === 'recent') {
+            $resources
+                ->where('is_archived', false)
+                ->whereNotNull('last_opened_at')
+                ->orderByDesc('last_opened_at');
         } else {
-            $resources->where('is_archived', false);
+            $resources->latest();
+
+            if ($linkFilter === 'favorites') {
+                $resources->where('is_archived', false)->where('is_favorite', true);
+            } elseif ($linkFilter === 'archived') {
+                $resources->where('is_archived', true);
+            } else {
+                $resources->where('is_archived', false);
+            }
         }
 
         $resources->search($search);
@@ -42,7 +51,7 @@ class DashboardController extends Controller
             'resources' => $resources
                 ->with('collections:id')
                 ->limit(30)
-                ->get(['id', 'title', 'url', 'description', 'favicon_url', 'preview_image_url', 'is_favorite', 'is_archived', 'show_on_home', 'tags', 'created_at'])
+                ->get(['id', 'title', 'url', 'description', 'favicon_url', 'preview_image_url', 'is_favorite', 'is_archived', 'show_on_home', 'tags', 'last_opened_at', 'created_at'])
                 ->map(fn (Resource $resource) => [
                     'id' => $resource->id,
                     'title' => $resource->title,
@@ -54,6 +63,7 @@ class DashboardController extends Controller
                     'is_favorite' => $resource->is_favorite,
                     'is_archived' => $resource->is_archived,
                     'show_on_home' => $resource->show_on_home,
+                    'opened_at' => $linkFilter === 'recent' ? $resource->last_opened_at?->toIso8601String() : null,
                     'created_at' => $resource->created_at,
                     'collection_id' => $resource->collections->first()?->id,
                     'collection_ids' => $resource->collections->pluck('id')->values(),

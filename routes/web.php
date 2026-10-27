@@ -18,6 +18,7 @@ Route::middleware(['auth', 'session.version'])->group(function () {
     Route::post('resources/bulk', [ResourceController::class, 'bulk'])->name('resources.bulk');
     Route::patch('resources/{resource}/favorite', [ResourceController::class, 'favorite'])->name('resources.favorite');
     Route::patch('resources/{resource}/archive', [ResourceController::class, 'archive'])->name('resources.archive');
+    Route::post('resources/{resource}/opened', [ResourceController::class, 'opened'])->name('resources.opened');
     Route::delete('resources/{resource}', [ResourceController::class, 'destroy'])->name('resources.destroy');
     Route::get('collections', [CollectionController::class, 'index'])->name('collections.index');
     Route::post('collections', [CollectionController::class, 'store'])->name('collections.store');

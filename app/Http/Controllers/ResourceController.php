@@ -13,6 +13,7 @@ use App\Support\UrlNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Throwable;
@@ -278,6 +279,17 @@ class ResourceController extends Controller
         ]);
 
         return back();
+    }
+
+    public function opened(Request $request, Resource $resource): Response
+    {
+        abort_unless($resource->user_id === $request->user()->id, 404);
+
+        $resource->update([
+            'last_opened_at' => now(),
+        ]);
+
+        return response()->noContent();
     }
 
     public function bulk(BulkResourceRequest $request): RedirectResponse

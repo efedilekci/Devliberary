@@ -2,6 +2,7 @@ import { Form, usePage } from '@inertiajs/react';
 import { Archive, ArchiveRestore, ChevronDown, ChevronUp, FolderMinus, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { CollectionChecks } from '@/components/collection-checks';
+import { OpenLink } from '@/components/open-link';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -45,9 +46,37 @@ export type LibraryResource = {
     is_favorite: boolean;
     is_archived: boolean;
     show_on_home?: boolean;
+    opened_at?: string | null;
     collection_id?: string | null;
     collection_ids?: string[];
 };
+
+function openedLabel(iso: string): string {
+    const opened = new Date(iso).getTime();
+    const minutes = Math.floor((Date.now() - opened) / 60000);
+
+    if (Number.isNaN(minutes) || minutes < 1) {
+        return 'Zojuist geopend';
+    }
+
+    if (minutes < 60) {
+        return minutes === 1 ? '1 minuut geleden geopend' : `${minutes} minuten geleden geopend`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+
+    if (hours < 24) {
+        return hours === 1 ? '1 uur geleden geopend' : `${hours} uur geleden geopend`;
+    }
+
+    const days = Math.floor(hours / 24);
+
+    if (days < 7) {
+        return days === 1 ? '1 dag geleden geopend' : `${days} dagen geleden geopend`;
+    }
+
+    return `Geopend op ${new Intl.DateTimeFormat('nl-NL', { dateStyle: 'medium' }).format(new Date(iso))}`;
+}
 
 function hostLabel(url: string): string {
     try {
@@ -127,15 +156,13 @@ function ResourceTags({ tags }: { tags?: string[] }) {
 function ResourceBody({ resource }: { resource: LibraryResource }) {
     return (
         <div className="min-w-0">
-            <a
-                href={resource.url}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium hover:underline"
-            >
+            <OpenLink href={resource.url} resourceId={resource.id} className="font-medium hover:underline">
                 {resource.title}
-            </a>
+            </OpenLink>
             <p className="text-muted-foreground truncate text-sm">{resource.url}</p>
+            {resource.opened_at ? (
+                <p className="text-muted-foreground text-xs">{openedLabel(resource.opened_at)}</p>
+            ) : null}
             {resource.description ? (
                 <p className="text-muted-foreground line-clamp-1 text-sm">{resource.description}</p>
             ) : null}
@@ -646,14 +673,13 @@ export function ResourceList({
                                         className="mt-1"
                                     />
                                     <div className="min-w-0">
-                                        <a
+                                        <OpenLink
                                             href={resource.url}
-                                            target="_blank"
-                                            rel="noreferrer"
+                                            resourceId={resource.id}
                                             className="font-medium hover:underline"
                                         >
                                             {resource.title}
-                                        </a>
+                                        </OpenLink>
                                         {resource.description ? (
                                             <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">
                                                 {resource.description}
@@ -665,8 +691,15 @@ export function ResourceList({
                                 <div className="mt-auto flex items-center justify-between gap-2">
                                     <div className="flex min-w-0 items-center gap-2">
                                         <ResourceMark url={resource.favicon_url} />
-                                        <span className="text-muted-foreground truncate text-xs">
-                                            {hostLabel(resource.url)}
+                                        <span className="min-w-0">
+                                            <span className="text-muted-foreground block truncate text-xs">
+                                                {hostLabel(resource.url)}
+                                            </span>
+                                            {resource.opened_at ? (
+                                                <span className="text-muted-foreground block truncate text-xs">
+                                                    {openedLabel(resource.opened_at)}
+                                                </span>
+                                            ) : null}
                                         </span>
                                     </div>
                                     <ResourceActions

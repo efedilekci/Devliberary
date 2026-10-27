@@ -8,6 +8,7 @@ import {
     IconPicker,
 } from '@/components/collection-appearance';
 import InputError from '@/components/input-error';
+import { OpenLink } from '@/components/open-link';
 import { DetachLinkButton, EditLinkButton, MoveLinkButtons, ResourceMark } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
 import {
@@ -182,14 +183,13 @@ function CollectionCard({
                                 className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1"
                             >
                                 <ResourceMark url={link.favicon_url} compact />
-                                <a
+                                <OpenLink
                                     href={link.url}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                    resourceId={link.id}
                                     className="min-w-0 flex-1 truncate text-sm hover:underline"
                                 >
                                     {link.title}
-                                </a>
+                                </OpenLink>
                                 {reorder ? (
                                     <MoveLinkButtons
                                         collectionId={collection.id}
@@ -562,14 +562,13 @@ export function CollectionBoard({
                                         className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1"
                                     >
                                         <ResourceMark url={link.favicon_url} compact />
-                                        <a
+                                        <OpenLink
                                             href={link.url}
-                                            target="_blank"
-                                            rel="noreferrer"
+                                            resourceId={link.id}
                                             className="min-w-0 flex-1 truncate text-sm hover:underline"
                                         >
                                             {link.title}
-                                        </a>
+                                        </OpenLink>
                                         <EditLinkButton
                                             resource={link}
                                             collectionId={null}

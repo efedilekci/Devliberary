@@ -20,7 +20,7 @@ export default function Dashboard({
     collections: CollectionItem[];
     uncollected: CollectionLink[];
     resources: ResourceItem[];
-    linkFilter: 'active' | 'all' | 'favorites' | 'archived';
+    linkFilter: 'active' | 'all' | 'favorites' | 'archived' | 'recent';
     search: string;
 }) {
     const [linkView, setLinkView] = useLinkView();
@@ -32,6 +32,7 @@ export default function Dashboard({
                   all: 'Alle links',
                   favorites: 'Favorieten',
                   archived: 'Archief',
+                  recent: 'Recent geopend',
               }[linkFilter];
     const showBoard = linkFilter === 'active' && search === '';
 
@@ -60,7 +61,9 @@ export default function Dashboard({
                                           ? 'Nog geen favorieten.'
                                           : linkFilter === 'archived'
                                             ? 'Het archief is leeg.'
-                                            : 'Nog geen links.'}
+                                            : linkFilter === 'recent'
+                                              ? 'Nog niets geopend.'
+                                              : 'Nog geen links.'}
                                 </p>
                             ) : (
                                 <ResourceList

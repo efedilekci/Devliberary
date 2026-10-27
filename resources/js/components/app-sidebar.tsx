@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Archive, Code, Folders, Layers, LayoutGrid, Star } from 'lucide-react';
+import { Archive, Clock, Code, Folders, Layers, LayoutGrid, Star } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -25,7 +25,7 @@ function isCollectionsIndex(url: string): boolean {
     return url.split('?')[0] === '/collections';
 }
 
-function linkFilter(url: string): 'active' | 'all' | 'favorites' | 'archived' | null {
+function linkFilter(url: string): 'active' | 'all' | 'favorites' | 'archived' | 'recent' | null {
     const [path, query = ''] = url.split('?');
 
     if (path !== '/dashboard') {
@@ -34,7 +34,7 @@ function linkFilter(url: string): 'active' | 'all' | 'favorites' | 'archived' | 
 
     const links = new URLSearchParams(query).get('links');
 
-    if (links === 'all' || links === 'favorites' || links === 'archived') {
+    if (links === 'all' || links === 'favorites' || links === 'archived' || links === 'recent') {
         return links;
     }
 
@@ -66,6 +66,12 @@ export function AppSidebar() {
             icon: Star,
             isActive: filter === 'favorites',
             badge: libraryNav?.favoriteCount,
+        },
+        {
+            title: 'Recent geopend',
+            href: dashboard.url({ query: { links: 'recent' } }),
+            icon: Clock,
+            isActive: filter === 'recent',
         },
         {
             title: 'Collecties',
