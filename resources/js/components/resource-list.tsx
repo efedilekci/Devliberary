@@ -1,5 +1,5 @@
 import { Form, usePage } from '@inertiajs/react';
-import { Archive, ArchiveRestore, ChevronDown, ChevronUp, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronDown, ChevronUp, FolderMinus, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { CollectionChecks } from '@/components/collection-checks';
 import InputError from '@/components/input-error';
@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { LinkView } from '@/hooks/use-link-view';
-import { move as moveLink } from '@/routes/collections/resources';
+import { destroy as detachLink, move as moveLink } from '@/routes/collections/resources';
 import { archive, bulk, destroy, favorite, update } from '@/routes/resources';
 
 export type BulkAction = 'favorite' | 'unfavorite' | 'archive' | 'restore' | 'delete';
@@ -320,12 +320,65 @@ export function MoveLinkButtons({
     );
 }
 
+export function DetachLinkButton({
+    collectionId,
+    collectionName,
+    resourceId,
+    resourceTitle,
+    className = 'size-7',
+}: {
+    collectionId: string;
+    collectionName: string;
+    resourceId: string;
+    resourceTitle: string;
+    className?: string;
+}) {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className={className}
+                    aria-label="Uit collectie halen"
+                >
+                    <FolderMinus />
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle>Uit collectie halen?</DialogTitle>
+                <DialogDescription>
+                    {resourceTitle} verdwijnt uit {collectionName}. De link blijft in je bibliotheek.
+                </DialogDescription>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">
+                            Annuleren
+                        </Button>
+                    </DialogClose>
+                    <Form {...detachLink.form({ collection: collectionId, resource: resourceId })}>
+                        {({ processing }) => (
+                            <Button type="submit" disabled={processing}>
+                                {processing && <Spinner />}
+                                Uit collectie halen
+                            </Button>
+                        )}
+                    </Form>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function ResourceActions({
     resource,
     move,
+    detach,
 }: {
     resource: LibraryResource;
     move?: { collectionId: string; index: number; total: number };
+    detach?: { collectionId: string; collectionName: string };
 }) {
     return (
         <div className="flex shrink-0 items-center">
@@ -335,6 +388,14 @@ function ResourceActions({
                     resourceId={resource.id}
                     index={move.index}
                     total={move.total}
+                />
+            ) : null}
+            {detach ? (
+                <DetachLinkButton
+                    collectionId={detach.collectionId}
+                    collectionName={detach.collectionName}
+                    resourceId={resource.id}
+                    resourceTitle={resource.title}
                 />
             ) : null}
             <EditLinkButton resource={resource} />
@@ -534,11 +595,13 @@ export function ResourceList({
     view = 'list',
     bulkActions = defaultBulkActions,
     collectionId = null,
+    collectionName = '',
 }: {
     resources: LibraryResource[];
     view?: LinkView;
     bulkActions?: BulkAction[];
     collectionId?: string | null;
+    collectionName?: string;
 }) {
     const [selected, setSelected] = useState<string[]>([]);
 
@@ -613,6 +676,11 @@ export function ResourceList({
                                                 ? { collectionId, index, total: resources.length }
                                                 : undefined
                                         }
+                                        detach={
+                                            collectionId
+                                                ? { collectionId, collectionName }
+                                                : undefined
+                                        }
                                     />
                                 </div>
                             </div>
@@ -640,6 +708,11 @@ export function ResourceList({
                                 move={
                                     collectionId
                                         ? { collectionId, index, total: resources.length }
+                                        : undefined
+                                }
+                                detach={
+                                    collectionId
+                                        ? { collectionId, collectionName }
                                         : undefined
                                 }
                             />

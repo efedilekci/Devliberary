@@ -213,6 +213,19 @@ class CollectionController extends Controller
         return back();
     }
 
+    public function detachResource(Request $request, Collection $collection, Resource $resource): RedirectResponse
+    {
+        abort_unless($collection->user_id === $request->user()->id, 404);
+        abort_unless($resource->user_id === $request->user()->id, 404);
+        abort_unless($collection->resources()->whereKey($resource->id)->exists(), 404);
+
+        $collection->resources()->detach($resource->id);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Link uit de collectie gehaald.']);
+
+        return back();
+    }
+
     private function cameFromShow(Collection $collection): bool
     {
         $previous = parse_url(url()->previous(), PHP_URL_PATH);

@@ -101,6 +101,7 @@ export default function CollectionShow({
                         resources={resources}
                         view={linkView}
                         collectionId={collection.id}
+                        collectionName={collection.name}
                     />
                 )}
             </div>

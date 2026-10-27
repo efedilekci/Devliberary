@@ -27,6 +27,7 @@ Route::middleware(['auth', 'session.version'])->group(function () {
     Route::patch('collections/{collection}/collapse', [CollectionController::class, 'collapse'])->name('collections.collapse');
     Route::patch('collections/{collection}/move', [CollectionController::class, 'move'])->name('collections.move');
     Route::patch('collections/{collection}/resources/{resource}/move', [CollectionController::class, 'moveResource'])->name('collections.resources.move');
+    Route::delete('collections/{collection}/resources/{resource}', [CollectionController::class, 'detachResource'])->name('collections.resources.destroy');
     Route::get('collections/{collection}', [CollectionController::class, 'show'])->name('collections.show');
     Route::get('snippets', [SnippetController::class, 'index'])->name('snippets.index');
     Route::post('snippets', [SnippetController::class, 'store'])->name('snippets.store');

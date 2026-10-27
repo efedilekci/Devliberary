@@ -265,4 +265,38 @@ class CollectionOrganizeTest extends TestCase
             ->patch(route('collections.resources.move', [$collection, $link]), ['direction' => 'down'])
             ->assertNotFound();
     }
+
+    public function test_removing_a_link_from_a_collection_keeps_it_in_the_library(): void
+    {
+        $user = User::factory()->create();
+        $laravel = Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        $notes = Collection::factory()->for($user)->create(['name' => 'Notities']);
+        $link = Resource::factory()->for($user)->create(['title' => 'Laravel docs']);
+        $laravel->attachResource($link, 0);
+        $notes->attachResource($link, 0);
+
+        $this->actingAs($user)
+            ->from(route('collections.show', $laravel))
+            ->delete(route('collections.resources.destroy', [$laravel, $link]))
+            ->assertRedirect(route('collections.show', $laravel));
+
+        $this->assertModelExists($link);
+        $this->assertFalse($laravel->resources()->whereKey($link->id)->exists());
+        $this->assertTrue($notes->resources()->whereKey($link->id)->exists());
+    }
+
+    public function test_another_user_cannot_remove_a_link_from_a_collection(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $collection = Collection::factory()->for($owner)->create();
+        $link = Resource::factory()->for($owner)->create();
+        $collection->attachResource($link);
+
+        $this->actingAs($other)
+            ->delete(route('collections.resources.destroy', [$collection, $link]))
+            ->assertNotFound();
+
+        $this->assertTrue($collection->resources()->whereKey($link->id)->exists());
+    }
 }

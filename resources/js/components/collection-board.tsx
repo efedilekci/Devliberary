@@ -8,7 +8,7 @@ import {
     IconPicker,
 } from '@/components/collection-appearance';
 import InputError from '@/components/input-error';
-import { EditLinkButton, MoveLinkButtons, ResourceMark } from '@/components/resource-list';
+import { DetachLinkButton, EditLinkButton, MoveLinkButtons, ResourceMark } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -196,6 +196,15 @@ function CollectionCard({
                                         resourceId={link.id}
                                         index={linkIndex}
                                         total={collection.resources_count}
+                                        className="size-7 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                                    />
+                                ) : null}
+                                {reorder ? (
+                                    <DetachLinkButton
+                                        collectionId={collection.id}
+                                        collectionName={collection.name}
+                                        resourceId={link.id}
+                                        resourceTitle={link.title}
                                         className="size-7 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                                     />
                                 ) : null}
