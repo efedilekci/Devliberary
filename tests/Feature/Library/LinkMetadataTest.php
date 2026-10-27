@@ -53,6 +53,57 @@ class LinkMetadataTest extends TestCase
         ]);
     }
 
+    public function test_typing_a_url_returns_the_page_title_and_description(): void
+    {
+        $this->fakePublicPage('<title>Gids</title><meta property="og:description" content="Korte uitleg."><meta property="og:image" content="https://example.com/cover.jpg">');
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson(route('resources.preview'), ['url' => 'https://example.com/guide'])
+            ->assertOk()
+            ->assertJson([
+                'title' => 'Gids',
+                'description' => 'Korte uitleg.',
+                'preview_image_url' => 'https://example.com/cover.jpg',
+            ]);
+    }
+
+    public function test_a_private_url_returns_no_page_details(): void
+    {
+        Http::fake();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->postJson(route('resources.preview'), ['url' => 'http://127.0.0.1/admin'])
+            ->assertOk()
+            ->assertJson([
+                'title' => '',
+                'description' => '',
+                'favicon_url' => '',
+                'preview_image_url' => '',
+            ]);
+
+        Http::assertNothingSent();
+    }
+
+    public function test_a_chosen_description_is_kept(): void
+    {
+        $this->fakePublicPage('<title>Gids</title><meta property="og:description" content="Van de pagina.">');
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->from(route('dashboard'))->post(route('resources.store'), [
+            'url' => 'https://example.com/guide',
+            'title' => 'Mijn titel',
+            'description' => 'Mijn uitleg',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->assertDatabaseHas('resources', [
+            'user_id' => $user->id,
+            'title' => 'Mijn titel',
+            'description' => 'Mijn uitleg',
+        ]);
+    }
+
     public function test_a_private_link_is_saved_without_a_request(): void
     {
         Http::fake();

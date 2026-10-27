@@ -21,6 +21,7 @@ class StoreResourceRequest extends FormRequest
         return [
             'url' => ['required', 'string', 'max:2048'],
             'title' => ['nullable', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:500'],
             'tags' => ['nullable', 'string', 'max:400', function (string $attribute, mixed $value, Closure $fail): void {
                 if (! is_string($value)) {
                     return;

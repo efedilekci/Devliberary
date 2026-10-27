@@ -10,6 +10,7 @@ use App\Support\LinkMetadata;
 use App\Support\LinkMetadataFetcher;
 use App\Support\TagList;
 use App\Support\UrlNormalizer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -23,6 +24,7 @@ class ResourceController extends Controller
         $user = $request->user();
         $normalized = UrlNormalizer::normalize($request->string('url')->toString());
         $title = trim($request->string('title')->toString());
+        $description = trim($request->string('description')->toString());
         $metadata = $this->metadata($normalized);
 
         if ($title === '') {
@@ -32,10 +34,14 @@ class ResourceController extends Controller
                 : (is_string($host) && $host !== '' ? $host : $normalized);
         }
 
+        if ($description === '') {
+            $description = $metadata->description;
+        }
+
         $resource = $user->resources()->create([
             'url' => $request->string('url')->toString(),
             'title' => mb_substr($title, 0, 200),
-            'description' => $metadata->description,
+            'description' => mb_substr($description, 0, 500),
             'favicon_url' => $metadata->faviconUrl,
             'preview_image_url' => $metadata->previewImageUrl,
             'notes' => '',
@@ -50,6 +56,33 @@ class ResourceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link opgeslagen.']);
 
         return back();
+    }
+
+    public function preview(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'url' => ['required', 'string', 'max:2048'],
+        ]);
+
+        $normalized = UrlNormalizer::normalize($validated['url']);
+
+        if (! filter_var($normalized, FILTER_VALIDATE_URL)) {
+            return response()->json([
+                'title' => '',
+                'description' => '',
+                'favicon_url' => '',
+                'preview_image_url' => '',
+            ]);
+        }
+
+        $metadata = $this->metadata($normalized);
+
+        return response()->json([
+            'title' => $metadata->title,
+            'description' => $metadata->description,
+            'favicon_url' => $metadata->faviconUrl,
+            'preview_image_url' => $metadata->previewImageUrl,
+        ]);
     }
 
     public function update(UpdateResourceRequest $request, Resource $resource): RedirectResponse
