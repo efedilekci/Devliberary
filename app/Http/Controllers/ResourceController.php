@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BulkResourceRequest;
 use App\Http\Requests\StoreResourceRequest;
 use App\Models\Resource;
 use App\Support\LinkMetadata;
@@ -9,6 +10,7 @@ use App\Support\LinkMetadataFetcher;
 use App\Support\UrlNormalizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Throwable;
 
@@ -76,6 +78,33 @@ class ResourceController extends Controller
         return back();
     }
 
+    public function bulk(BulkResourceRequest $request): RedirectResponse
+    {
+        /** @var list<string> $ids */
+        $ids = $request->validated('ids');
+        $resources = $request->user()->resources()->whereIn('id', $ids)->get();
+
+        abort_unless($resources->count() === count($ids), 404);
+
+        $action = $request->string('action')->toString();
+
+        match ($action) {
+            'favorite' => $this->updateEach($resources, ['is_favorite' => true]),
+            'unfavorite' => $this->updateEach($resources, ['is_favorite' => false]),
+            'archive' => $this->updateEach($resources, ['is_archived' => true]),
+            'restore' => $this->updateEach($resources, ['is_archived' => false]),
+            'delete' => $resources->each(fn (Resource $resource) => $resource->delete()),
+            default => abort(404),
+        };
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $this->bulkMessage($action, $resources->count()),
+        ]);
+
+        return back();
+    }
+
     public function destroy(Request $request, Resource $resource): RedirectResponse
     {
         abort_unless($resource->user_id === $request->user()->id, 404);
@@ -85,6 +114,29 @@ class ResourceController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Link verwijderd.']);
 
         return back();
+    }
+
+    /**
+     * @param  Collection<int, Resource>  $resources
+     * @param  array<string, bool>  $attributes
+     */
+    private function updateEach(Collection $resources, array $attributes): void
+    {
+        $resources->each(fn (Resource $resource) => $resource->update($attributes));
+    }
+
+    private function bulkMessage(string $action, int $count): string
+    {
+        $many = $count !== 1;
+
+        return match ($action) {
+            'favorite' => $many ? 'Links als favoriet gemarkeerd.' : 'Link als favoriet gemarkeerd.',
+            'unfavorite' => $many ? 'Favorieten weggehaald.' : 'Favoriet weggehaald.',
+            'archive' => $many ? 'Links gearchiveerd.' : 'Link gearchiveerd.',
+            'restore' => $many ? 'Links teruggezet.' : 'Link teruggezet.',
+            'delete' => $many ? 'Links verwijderd.' : 'Link verwijderd.',
+            default => 'Klaar.',
+        };
     }
 
     private function metadata(string $url): LinkMetadata

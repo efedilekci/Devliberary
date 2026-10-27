@@ -403,7 +403,15 @@ export default function Dashboard({
                                   : 'Nog geen links.'}
                         </p>
                     ) : (
-                        <ResourceList resources={resources} view={linkView} />
+                        <ResourceList
+                            resources={resources}
+                            view={linkView}
+                            bulkActions={
+                                linkFilter === 'archived'
+                                    ? ['restore', 'delete']
+                                    : ['favorite', 'unfavorite', 'archive', 'delete']
+                            }
+                        />
                     )}
                 </section>
             </div>
