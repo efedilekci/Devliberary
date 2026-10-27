@@ -72,7 +72,7 @@ function CollectionCard({
 
     return (
         <article
-            className="flex min-h-40 flex-col rounded-xl border"
+            className="flex min-h-40 min-w-0 flex-col overflow-hidden rounded-xl border"
             style={{
                 borderTopColor: collection.accent_color,
                 borderTopWidth: 3,
@@ -80,7 +80,7 @@ function CollectionCard({
         >
             <header className="flex items-start justify-between gap-2 px-3 pt-3">
                 <Link href={showCollection(collection.id)} className="min-w-0">
-                    <h3 className="font-medium">{collection.name}</h3>
+                    <h3 className="truncate font-medium">{collection.name}</h3>
                     <p className="text-muted-foreground text-sm">
                         {collection.resources_count}{' '}
                         {collection.resources_count === 1 ? 'link' : 'links'}
@@ -140,12 +140,12 @@ function CollectionCard({
                 </div>
             </header>
             {!collection.is_collapsed && (
-                <ul className="grid gap-0.5 p-2">
+                <ul className="grid min-w-0 gap-0.5 p-2">
                     {collection.links.length === 0 ? (
                         <li className="text-muted-foreground px-2 py-3 text-sm">Nog geen links.</li>
                     ) : (
                         collection.links.map((link) => (
-                            <li key={link.id} className="flex items-center gap-2 rounded-md px-2 py-1.5">
+                            <li key={link.id} className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5">
                                 <ResourceMark url={link.favicon_url} />
                                 <a
                                     href={link.url}
@@ -158,14 +158,14 @@ function CollectionCard({
                                 <EditLinkButton
                                     resource={link}
                                     collectionId={collection.id}
-                                    className="size-7"
+                                    className="size-7 shrink-0"
                                 />
                                 <Form {...favoriteResource.form(link.id)}>
                                     <Button
                                         type="submit"
                                         variant="ghost"
                                         size="icon"
-                                        className="size-7"
+                                        className="size-7 shrink-0"
                                         aria-label={
                                             link.is_favorite ? 'Favoriet weghalen' : 'Favoriet maken'
                                         }
@@ -363,18 +363,18 @@ export default function Dashboard({
                                 />
                             ))}
                             {uncollected.length > 0 && (
-                                <article className="flex min-h-40 flex-col rounded-xl border">
+                                <article className="flex min-h-40 min-w-0 flex-col overflow-hidden rounded-xl border">
                                     <header className="px-3 pt-3">
                                         <h3 className="font-medium">Zonder collectie</h3>
                                         <p className="text-muted-foreground text-sm">
                                             {linkLabel(uncollected.length)}
                                         </p>
                                     </header>
-                                    <ul className="grid gap-0.5 p-2">
+                                    <ul className="grid min-w-0 gap-0.5 p-2">
                                         {uncollected.map((link) => (
                                             <li
                                                 key={link.id}
-                                                className="flex items-center gap-2 rounded-md px-2 py-1.5"
+                                                className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5"
                                             >
                                                 <ResourceMark url={link.favicon_url} />
                                                 <a
@@ -388,14 +388,14 @@ export default function Dashboard({
                                                 <EditLinkButton
                                                     resource={link}
                                                     collectionId={null}
-                                                    className="size-7"
+                                                    className="size-7 shrink-0"
                                                 />
                                                 <Form {...favoriteResource.form(link.id)}>
                                                     <Button
                                                         type="submit"
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="size-7"
+                                                        className="size-7 shrink-0"
                                                         aria-label={
                                                             link.is_favorite
                                                                 ? 'Favoriet weghalen'
