@@ -321,7 +321,7 @@ export function CollectionBoard({
                 }
             >
                 {!onHome && (
-                    <h2 className="border-b-2 border-[#F97316] px-1 pb-2 text-sm font-medium">
+                    <h2 className="border-primary border-b-2 px-1 pb-2 text-sm font-medium">
                         Jouw collecties
                     </h2>
                 )}
@@ -359,12 +359,7 @@ export function CollectionBoard({
                         <Plus />
                         Link toevoegen
                     </Button>
-                    <Button
-                        type="button"
-                        size="sm"
-                        className="bg-[#F97316] text-white hover:bg-[#ea580c]"
-                        onClick={() => setCollectionOpen(true)}
-                    >
+                    <Button type="button" size="sm" onClick={() => setCollectionOpen(true)}>
                         <FolderPlus />
                         Collectie maken
                     </Button>
