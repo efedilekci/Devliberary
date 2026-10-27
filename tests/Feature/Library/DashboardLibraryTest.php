@@ -109,4 +109,22 @@ class DashboardLibraryTest extends TestCase
                 ->where('collections.0.links.0.title', 'ShadCN')
                 ->where('uncollected.0.title', 'Los'));
     }
+
+    public function test_all_links_lists_every_saved_link(): void
+    {
+        $user = User::factory()->create();
+        Resource::factory()->for($user)->create(['title' => 'Docs']);
+        Resource::factory()->for($user)->create([
+            'title' => 'Weg',
+            'is_archived' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['links' => 'all']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('linkFilter', 'all')
+                ->has('resources', 1)
+                ->where('resources.0.title', 'Docs'));
+    }
 }

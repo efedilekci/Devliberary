@@ -358,7 +358,7 @@ export default function Dashboard({
     collections: CollectionItem[];
     uncollected: CollectionLink[];
     resources: ResourceItem[];
-    linkFilter: 'active' | 'favorites' | 'archived';
+    linkFilter: 'active' | 'all' | 'favorites' | 'archived';
 }) {
     const pinned = collections.filter((collection) => collection.is_pinned_to_home);
     const unpinned = collections.filter(
@@ -369,9 +369,16 @@ export default function Dashboard({
     const [linkOpen, setLinkOpen] = useState(false);
     const [linkCollectionId, setLinkCollectionId] = useState<string | null>(null);
     const [collectionOpen, setCollectionOpen] = useState(false);
+    const pageTitle = {
+        active: 'Dashboard',
+        all: 'Alle links',
+        favorites: 'Favorieten',
+        archived: 'Archief',
+    }[linkFilter];
+
     return (
         <>
-            <Head title="Dashboard" />
+            <Head title={pageTitle} />
             <div className="flex flex-1 flex-col gap-6 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap gap-2">
@@ -401,6 +408,13 @@ export default function Dashboard({
                             {(
                                 [
                                     ['active', 'Alles', dashboard()],
+                                    [
+                                        'all',
+                                        'Alle links',
+                                        dashboard.url({
+                                            query: { links: 'all' },
+                                        }),
+                                    ],
                                     [
                                         'favorites',
                                         'Favorieten',
@@ -540,12 +554,14 @@ export default function Dashboard({
                     </section>
                 ) : (
                     <section className="grid gap-3">
-                        <h2 className="text-sm font-medium">Links</h2>
+                        <h2 className="text-sm font-medium">{pageTitle}</h2>
                         {resources.length === 0 ? (
                             <p className="text-muted-foreground text-sm">
                                 {linkFilter === 'favorites'
                                     ? 'Nog geen favorieten.'
-                                    : 'Het archief is leeg.'}
+                                    : linkFilter === 'archived'
+                                      ? 'Het archief is leeg.'
+                                      : 'Nog geen links.'}
                             </p>
                         ) : (
                             <ResourceList

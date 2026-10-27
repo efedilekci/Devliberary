@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $user = $request->user();
         $linkFilter = $request->string('links')->toString();
 
-        if (! in_array($linkFilter, ['favorites', 'archived'], true)) {
+        if (! in_array($linkFilter, ['all', 'favorites', 'archived'], true)) {
             $linkFilter = 'active';
         }
 
