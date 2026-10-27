@@ -14,6 +14,7 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         $linkFilter = $request->string('links')->toString();
+        $search = mb_substr(trim($request->string('q')->toString()), 0, 200);
 
         if (! in_array($linkFilter, ['all', 'favorites', 'archived'], true)) {
             $linkFilter = 'active';
@@ -28,6 +29,8 @@ class DashboardController extends Controller
         } else {
             $resources->where('is_archived', false);
         }
+
+        $resources->search($search);
 
         $collections = $user->collections()
             ->withCount(['resources' => fn ($query) => $query->where('resources.is_archived', false)])
@@ -69,6 +72,7 @@ class DashboardController extends Controller
                 ->limit(30)
                 ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite']),
             'linkFilter' => $linkFilter,
+            'search' => $search,
             'resources' => $resources
                 ->limit(30)
                 ->get(['id', 'title', 'url', 'favicon_url', 'is_favorite', 'is_archived', 'created_at']),

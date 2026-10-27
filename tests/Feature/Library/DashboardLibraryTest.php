@@ -154,4 +154,45 @@ class DashboardLibraryTest extends TestCase
                 ->where('libraryNav.collections.0.name', 'Laravel')
                 ->where('libraryNav.collections.0.resources_count', 1));
     }
+
+    public function test_search_matches_title_or_url_and_skips_archived_links(): void
+    {
+        $user = User::factory()->create();
+        Resource::factory()->for($user)->create([
+            'title' => 'Laravel docs',
+            'url' => 'https://laravel.com/docs',
+        ]);
+        Resource::factory()->for($user)->create([
+            'title' => 'PHP',
+            'url' => 'https://www.php.net',
+        ]);
+        Resource::factory()->for($user)->create([
+            'title' => 'Laravel archief',
+            'url' => 'https://laravel.com/old',
+            'is_archived' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['q' => 'laravel']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('search', 'laravel')
+                ->where('linkFilter', 'active')
+                ->has('resources', 1)
+                ->where('resources.0.title', 'Laravel docs'));
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['q' => 'php.net']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->has('resources', 1)
+                ->where('resources.0.title', 'PHP'));
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['q' => '%']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('search', '%')
+                ->has('resources', 0));
+    }
 }

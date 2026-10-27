@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\UrlNormalizer;
 use Database\Factories\ResourceFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -69,6 +70,23 @@ class Resource extends Model
         return $this->belongsToMany(Collection::class, 'collection_resource')
             ->withPivot(['user_id', 'position'])
             ->orderByPivot('position');
+    }
+
+    public function scopeSearch(Builder $query, string $term): void
+    {
+        $term = trim($term);
+
+        if ($term === '') {
+            return;
+        }
+
+        $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $term).'%';
+
+        $query->where(function (Builder $query) use ($like): void {
+            $query->whereRaw("title like ? escape '!'", [$like])
+                ->orWhereRaw("url like ? escape '!'", [$like])
+                ->orWhereRaw("description like ? escape '!'", [$like]);
+        });
     }
 
     protected static function booted(): void

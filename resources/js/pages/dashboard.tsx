@@ -354,11 +354,13 @@ export default function Dashboard({
     uncollected,
     resources,
     linkFilter,
+    search,
 }: {
     collections: CollectionItem[];
     uncollected: CollectionLink[];
     resources: ResourceItem[];
     linkFilter: 'active' | 'all' | 'favorites' | 'archived';
+    search: string;
 }) {
     const pinned = collections.filter((collection) => collection.is_pinned_to_home);
     const unpinned = collections.filter(
@@ -369,12 +371,15 @@ export default function Dashboard({
     const [linkOpen, setLinkOpen] = useState(false);
     const [linkCollectionId, setLinkCollectionId] = useState<string | null>(null);
     const [collectionOpen, setCollectionOpen] = useState(false);
-    const pageTitle = {
-        active: 'Dashboard',
-        all: 'Alle links',
-        favorites: 'Favorieten',
-        archived: 'Archief',
-    }[linkFilter];
+    const pageTitle =
+        search !== ''
+            ? 'Zoekresultaten'
+            : {
+                  active: 'Dashboard',
+                  all: 'Alle links',
+                  favorites: 'Favorieten',
+                  archived: 'Archief',
+              }[linkFilter];
 
     return (
         <>
@@ -403,12 +408,12 @@ export default function Dashboard({
                             onOpenChange={setCollectionOpen}
                         />
                     </div>
-                    {linkFilter !== 'active' && (
+                    {(linkFilter !== 'active' || search !== '') && (
                         <LinkViewToggle view={linkView} onChange={setLinkView} />
                     )}
                 </div>
 
-                {linkFilter === 'active' ? (
+                {linkFilter === 'active' && search === '' ? (
                     <section className="grid gap-3">
                         <h2 className="text-sm font-medium">Collecties</h2>
                         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -512,11 +517,13 @@ export default function Dashboard({
                         <h2 className="text-sm font-medium">{pageTitle}</h2>
                         {resources.length === 0 ? (
                             <p className="text-muted-foreground text-sm">
-                                {linkFilter === 'favorites'
-                                    ? 'Nog geen favorieten.'
-                                    : linkFilter === 'archived'
-                                      ? 'Het archief is leeg.'
-                                      : 'Nog geen links.'}
+                                {search !== ''
+                                    ? 'Geen links gevonden.'
+                                    : linkFilter === 'favorites'
+                                      ? 'Nog geen favorieten.'
+                                      : linkFilter === 'archived'
+                                        ? 'Het archief is leeg.'
+                                        : 'Nog geen links.'}
                             </p>
                         ) : (
                             <ResourceList
