@@ -76,6 +76,14 @@ class User extends Authenticatable implements PasskeyUser
         return $this->hasMany(Collection::class);
     }
 
+    /**
+     * @return HasMany<Snippet, $this>
+     */
+    public function snippets(): HasMany
+    {
+        return $this->hasMany(Snippet::class);
+    }
+
     public function isApproved(): bool
     {
         return $this->approval_status === ApprovalStatus::Approved;

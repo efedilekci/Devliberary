@@ -3,6 +3,7 @@
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ResourceController;
+use App\Http\Controllers\SnippetController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -19,6 +20,10 @@ Route::middleware(['auth', 'session.version'])->group(function () {
     Route::patch('collections/{collection}/collapse', [CollectionController::class, 'collapse'])->name('collections.collapse');
     Route::patch('collections/{collection}/move', [CollectionController::class, 'move'])->name('collections.move');
     Route::get('collections/{collection}', [CollectionController::class, 'show'])->name('collections.show');
+    Route::get('snippets', [SnippetController::class, 'index'])->name('snippets.index');
+    Route::post('snippets', [SnippetController::class, 'store'])->name('snippets.store');
+    Route::patch('snippets/{snippet}/favorite', [SnippetController::class, 'favorite'])->name('snippets.favorite');
+    Route::delete('snippets/{snippet}', [SnippetController::class, 'destroy'])->name('snippets.destroy');
 });
 
 require __DIR__.'/settings.php';
