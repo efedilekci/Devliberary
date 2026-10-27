@@ -6,6 +6,7 @@ use App\Models\Collection;
 use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class DashboardLibraryTest extends TestCase
@@ -84,5 +85,28 @@ class DashboardLibraryTest extends TestCase
 
         $response->assertSessionHasErrors('collection_id');
         $this->assertSame(0, Resource::query()->count());
+    }
+
+    public function test_collection_cards_list_their_own_links(): void
+    {
+        $user = User::factory()->create();
+        $collection = Collection::factory()->for($user)->create(['name' => 'Design']);
+        $inside = Resource::factory()->for($user)->create(['title' => 'ShadCN']);
+        $archived = Resource::factory()->for($user)->create([
+            'title' => 'Weg',
+            'is_archived' => true,
+        ]);
+        Resource::factory()->for($user)->create(['title' => 'Los']);
+        $collection->attachResource($inside);
+        $collection->attachResource($archived);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('collections.0.name', 'Design')
+                ->where('collections.0.resources_count', 1)
+                ->where('collections.0.links.0.title', 'ShadCN')
+                ->where('uncollected.0.title', 'Los'));
     }
 }

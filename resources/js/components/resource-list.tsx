@@ -37,7 +37,7 @@ export type LibraryResource = {
     is_archived: boolean;
 };
 
-function ResourceMark({ url }: { url: string }) {
+export function ResourceMark({ url }: { url: string }) {
     const [failed, setFailed] = useState(false);
 
     if (url === '' || failed) {

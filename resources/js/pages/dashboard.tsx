@@ -1,9 +1,15 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowDown, ArrowUp, FoldVertical, FolderPlus, Pin, Plus, UnfoldVertical } from 'lucide-react';
+import { FolderPlus, MoreHorizontal, Plus, Star } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
-import { LinkViewToggle, ResourceList, type LibraryResource } from '@/components/resource-list';
+import { LinkViewToggle, ResourceList, ResourceMark, type LibraryResource } from '@/components/resource-list';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     Dialog,
     DialogClose,
@@ -26,7 +32,15 @@ import {
     show as showCollection,
     store as storeCollection,
 } from '@/routes/collections';
-import { store as storeResource } from '@/routes/resources';
+import { favorite as favoriteResource, store as storeResource } from '@/routes/resources';
+
+type CollectionLink = {
+    id: string;
+    title: string;
+    url: string;
+    favicon_url: string;
+    is_favorite: boolean;
+};
 
 type CollectionItem = {
     id: string;
@@ -36,6 +50,7 @@ type CollectionItem = {
     resources_count: number;
     is_pinned_to_home: boolean;
     is_collapsed: boolean;
+    links: CollectionLink[];
 };
 
 type ResourceItem = LibraryResource;
@@ -44,108 +59,151 @@ function CollectionCard({
     collection,
     index,
     total,
+    onAddLink,
 }: {
     collection: CollectionItem;
     index: number;
     total: number;
+    onAddLink: (collectionId: string) => void;
 }) {
+    const hidden = Math.max(collection.resources_count - collection.links.length, 0);
+
     return (
         <article
-            className="flex items-start justify-between gap-3 rounded-xl border p-4"
+            className="flex min-h-40 flex-col rounded-xl border"
             style={{
                 borderTopColor: collection.accent_color,
                 borderTopWidth: 3,
             }}
         >
-            <Link href={showCollection(collection.id)} className="min-w-0">
-                <h3 className="font-medium">{collection.name}</h3>
-                {!collection.is_collapsed && (
-                    <p className="text-muted-foreground mt-1 text-sm">
+            <header className="flex items-start justify-between gap-2 px-3 pt-3">
+                <Link href={showCollection(collection.id)} className="min-w-0">
+                    <h3 className="font-medium">{collection.name}</h3>
+                    <p className="text-muted-foreground text-sm">
                         {collection.resources_count}{' '}
                         {collection.resources_count === 1 ? 'link' : 'links'}
                     </p>
-                )}
-            </Link>
-            <div className="flex shrink-0 items-center">
-                <Form {...pinCollection.form(collection.id)}>
+                </Link>
+                <div className="flex shrink-0 items-center">
                     <Button
-                        type="submit"
+                        type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label={
-                            collection.is_pinned_to_home
-                                ? 'Losmaken van het dashboard'
-                                : 'Vastzetten op het dashboard'
-                        }
+                        aria-label="Link aan deze collectie toevoegen"
+                        onClick={() => onAddLink(collection.id)}
                     >
-                        <Pin
-                            className={
-                                collection.is_pinned_to_home
-                                    ? 'fill-current'
-                                    : undefined
-                            }
-                        />
+                        <Plus />
                     </Button>
-                </Form>
-                <Form {...collapseCollection.form(collection.id)}>
-                    <Button
-                        type="submit"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={
-                            collection.is_collapsed ? 'Uitklappen' : 'Inklappen'
-                        }
-                    >
-                        {collection.is_collapsed ? (
-                            <UnfoldVertical />
-                        ) : (
-                            <FoldVertical />
-                        )}
-                    </Button>
-                </Form>
-                <Form {...moveCollection.form(collection.id)}>
-                    <input type="hidden" name="direction" value="up" />
-                    <Button
-                        type="submit"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Omhoog"
-                        disabled={index === 0}
-                    >
-                        <ArrowUp />
-                    </Button>
-                </Form>
-                <Form {...moveCollection.form(collection.id)}>
-                    <input type="hidden" name="direction" value="down" />
-                    <Button
-                        type="submit"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Omlaag"
-                        disabled={index === total - 1}
-                    >
-                        <ArrowDown />
-                    </Button>
-                </Form>
-            </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="ghost" size="icon" aria-label="Collectie-opties">
+                                <MoreHorizontal />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <Form {...pinCollection.form(collection.id)}>
+                                <DropdownMenuItem asChild>
+                                    <button type="submit" className="w-full">
+                                        {collection.is_pinned_to_home
+                                            ? 'Losmaken van het dashboard'
+                                            : 'Vastzetten op het dashboard'}
+                                    </button>
+                                </DropdownMenuItem>
+                            </Form>
+                            <Form {...collapseCollection.form(collection.id)}>
+                                <DropdownMenuItem asChild>
+                                    <button type="submit" className="w-full">
+                                        {collection.is_collapsed ? 'Uitklappen' : 'Inklappen'}
+                                    </button>
+                                </DropdownMenuItem>
+                            </Form>
+                            <Form {...moveCollection.form(collection.id)}>
+                                <input type="hidden" name="direction" value="up" />
+                                <DropdownMenuItem asChild disabled={index === 0}>
+                                    <button type="submit" className="w-full" disabled={index === 0}>
+                                        Omhoog
+                                    </button>
+                                </DropdownMenuItem>
+                            </Form>
+                            <Form {...moveCollection.form(collection.id)}>
+                                <input type="hidden" name="direction" value="down" />
+                                <DropdownMenuItem asChild disabled={index === total - 1}>
+                                    <button type="submit" className="w-full" disabled={index === total - 1}>
+                                        Omlaag
+                                    </button>
+                                </DropdownMenuItem>
+                            </Form>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </header>
+            {!collection.is_collapsed && (
+                <ul className="grid gap-0.5 p-2">
+                    {collection.links.length === 0 ? (
+                        <li className="text-muted-foreground px-2 py-3 text-sm">Nog geen links.</li>
+                    ) : (
+                        collection.links.map((link) => (
+                            <li key={link.id} className="flex items-center gap-2 rounded-md px-2 py-1.5">
+                                <ResourceMark url={link.favicon_url} />
+                                <a
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="min-w-0 flex-1 truncate text-sm hover:underline"
+                                >
+                                    {link.title}
+                                </a>
+                                <Form {...favoriteResource.form(link.id)}>
+                                    <Button
+                                        type="submit"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="size-7"
+                                        aria-label={
+                                            link.is_favorite ? 'Favoriet weghalen' : 'Favoriet maken'
+                                        }
+                                    >
+                                        <Star
+                                            className={link.is_favorite ? 'fill-current' : undefined}
+                                        />
+                                    </Button>
+                                </Form>
+                            </li>
+                        ))
+                    )}
+                    {hidden > 0 && (
+                        <li className="px-2 py-1">
+                            <Link
+                                href={showCollection(collection.id)}
+                                className="text-muted-foreground text-sm hover:underline"
+                            >
+                                Nog {hidden} {hidden === 1 ? 'link' : 'links'}
+                            </Link>
+                        </li>
+                    )}
+                </ul>
+            )}
         </article>
     );
 }
 
-function LinkDialog({ collections }: { collections: CollectionItem[] }) {
-    const [open, setOpen] = useState(false);
+function LinkDialog({
+    collections,
+    open,
+    onOpenChange,
+    collectionId,
+}: {
+    collections: CollectionItem[];
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    collectionId: string | null;
+}) {
     const collectionOptions = [...collections].sort((a, b) =>
         a.name.localeCompare(b.name, 'nl'),
     );
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button type="button">
-                    <Plus />
-                    Link toevoegen
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Link toevoegen</DialogTitle>
@@ -154,10 +212,11 @@ function LinkDialog({ collections }: { collections: CollectionItem[] }) {
                     </DialogDescription>
                 </DialogHeader>
                 <Form
+                    key={collectionId ?? 'geen'}
                     {...storeResource.form()}
                     resetOnSuccess
                     disableWhileProcessing
-                    onSuccess={() => setOpen(false)}
+                    onSuccess={() => onOpenChange(false)}
                     className="grid gap-4"
                 >
                     {({ processing, errors }) => (
@@ -190,7 +249,7 @@ function LinkDialog({ collections }: { collections: CollectionItem[] }) {
                                 <select
                                     id="collection_id"
                                     name="collection_id"
-                                    defaultValue=""
+                                    defaultValue={collectionId ?? ''}
                                     className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
                                 >
                                     <option value="">Geen collectie</option>
@@ -224,11 +283,15 @@ function LinkDialog({ collections }: { collections: CollectionItem[] }) {
     );
 }
 
-function CollectionDialog() {
-    const [open, setOpen] = useState(false);
-
+function CollectionDialog({
+    open,
+    onOpenChange,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
                 <Button type="button" variant="outline">
                     <FolderPlus />
@@ -246,7 +309,7 @@ function CollectionDialog() {
                     {...storeCollection.form()}
                     resetOnSuccess
                     disableWhileProcessing
-                    onSuccess={() => setOpen(false)}
+                    onSuccess={() => onOpenChange(false)}
                     className="grid gap-4"
                 >
                     {({ processing, errors }) => (
@@ -282,12 +345,18 @@ function CollectionDialog() {
     );
 }
 
+function linkLabel(count: number): string {
+    return `${count} ${count === 1 ? 'link' : 'links'}`;
+}
+
 export default function Dashboard({
     collections,
+    uncollected,
     resources,
     linkFilter,
 }: {
     collections: CollectionItem[];
+    uncollected: CollectionLink[];
     resources: ResourceItem[];
     linkFilter: 'active' | 'favorites' | 'archived';
 }) {
@@ -297,65 +366,38 @@ export default function Dashboard({
     );
     const showGroupLabels = pinned.length > 0 && unpinned.length > 0;
     const [linkView, setLinkView] = useLinkView();
-
+    const [linkOpen, setLinkOpen] = useState(false);
+    const [linkCollectionId, setLinkCollectionId] = useState<string | null>(null);
+    const [collectionOpen, setCollectionOpen] = useState(false);
     return (
         <>
             <Head title="Dashboard" />
             <div className="flex flex-1 flex-col gap-6 p-4">
-                <div className="flex flex-wrap gap-2">
-                    <LinkDialog collections={collections} />
-                    <CollectionDialog />
-                </div>
-
-                <section className="grid gap-3">
-                    <h2 className="text-sm font-medium">Collecties</h2>
-                    {collections.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">
-                            Nog geen collecties.
-                        </p>
-                    ) : (
-                        <div className="grid gap-6">
-                            {pinned.length > 0 && (
-                                <div className="grid gap-3">
-                                    {showGroupLabels && (
-                                        <h3 className="text-muted-foreground text-sm">
-                                            Op het dashboard
-                                        </h3>
-                                    )}
-                                    {pinned.map((collection, index) => (
-                                        <CollectionCard
-                                            key={collection.id}
-                                            collection={collection}
-                                            index={index}
-                                            total={pinned.length}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                            {unpinned.length > 0 && (
-                                <div className="grid gap-3">
-                                    <h3 className="text-muted-foreground text-sm">
-                                        Niet op het dashboard
-                                    </h3>
-                                    {unpinned.map((collection, index) => (
-                                        <CollectionCard
-                                            key={collection.id}
-                                            collection={collection}
-                                            index={index}
-                                            total={unpinned.length}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </section>
-
-                <section className="grid gap-3">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h2 className="text-sm font-medium">Links</h2>
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div className="flex gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setLinkCollectionId(null);
+                                setLinkOpen(true);
+                            }}
+                        >
+                            <Plus />
+                            Link toevoegen
+                        </Button>
+                        <LinkDialog
+                            collections={collections}
+                            open={linkOpen}
+                            collectionId={linkCollectionId}
+                            onOpenChange={setLinkOpen}
+                        />
+                        <CollectionDialog
+                            open={collectionOpen}
+                            onOpenChange={setCollectionOpen}
+                        />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex gap-3">
                             {(
                                 [
                                     ['active', 'Alles', dashboard()],
@@ -390,30 +432,134 @@ export default function Dashboard({
                                     {label}
                                 </Link>
                             ))}
-                            </div>
-                            <LinkViewToggle view={linkView} onChange={setLinkView} />
                         </div>
+                        {linkFilter !== 'active' && (
+                            <LinkViewToggle view={linkView} onChange={setLinkView} />
+                        )}
                     </div>
-                    {resources.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">
-                            {linkFilter === 'favorites'
-                                ? 'Nog geen favorieten.'
-                                : linkFilter === 'archived'
-                                  ? 'Het archief is leeg.'
-                                  : 'Nog geen links.'}
-                        </p>
-                    ) : (
-                        <ResourceList
-                            resources={resources}
-                            view={linkView}
-                            bulkActions={
-                                linkFilter === 'archived'
-                                    ? ['restore', 'delete']
-                                    : ['favorite', 'unfavorite', 'archive', 'delete']
-                            }
-                        />
-                    )}
-                </section>
+                </div>
+
+                {linkFilter === 'active' ? (
+                    <section className="grid gap-3">
+                        <h2 className="text-sm font-medium">Collecties</h2>
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {showGroupLabels && (
+                                <h3 className="text-muted-foreground text-sm sm:col-span-2 xl:col-span-3">
+                                    Op het dashboard
+                                </h3>
+                            )}
+                            {pinned.map((collection, index) => (
+                                <CollectionCard
+                                    key={collection.id}
+                                    collection={collection}
+                                    index={index}
+                                    total={pinned.length}
+                                    onAddLink={(collectionId) => {
+                                        setLinkCollectionId(collectionId);
+                                        setLinkOpen(true);
+                                    }}
+                                />
+                            ))}
+                            {showGroupLabels && (
+                                <h3 className="text-muted-foreground text-sm sm:col-span-2 xl:col-span-3">
+                                    Niet op het dashboard
+                                </h3>
+                            )}
+                            {unpinned.map((collection, index) => (
+                                <CollectionCard
+                                    key={collection.id}
+                                    collection={collection}
+                                    index={index}
+                                    total={unpinned.length}
+                                    onAddLink={(collectionId) => {
+                                        setLinkCollectionId(collectionId);
+                                        setLinkOpen(true);
+                                    }}
+                                />
+                            ))}
+                            {uncollected.length > 0 && (
+                                <article className="flex min-h-40 flex-col rounded-xl border">
+                                    <header className="px-3 pt-3">
+                                        <h3 className="font-medium">Zonder collectie</h3>
+                                        <p className="text-muted-foreground text-sm">
+                                            {linkLabel(uncollected.length)}
+                                        </p>
+                                    </header>
+                                    <ul className="grid gap-0.5 p-2">
+                                        {uncollected.map((link) => (
+                                            <li
+                                                key={link.id}
+                                                className="flex items-center gap-2 rounded-md px-2 py-1.5"
+                                            >
+                                                <ResourceMark url={link.favicon_url} />
+                                                <a
+                                                    href={link.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="min-w-0 flex-1 truncate text-sm hover:underline"
+                                                >
+                                                    {link.title}
+                                                </a>
+                                                <Form {...favoriteResource.form(link.id)}>
+                                                    <Button
+                                                        type="submit"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="size-7"
+                                                        aria-label={
+                                                            link.is_favorite
+                                                                ? 'Favoriet weghalen'
+                                                                : 'Favoriet maken'
+                                                        }
+                                                    >
+                                                        <Star
+                                                            className={
+                                                                link.is_favorite
+                                                                    ? 'fill-current'
+                                                                    : undefined
+                                                            }
+                                                        />
+                                                    </Button>
+                                                </Form>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </article>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setCollectionOpen(true)}
+                                className="text-muted-foreground hover:bg-muted/40 flex min-h-40 flex-col items-center justify-center gap-1 rounded-xl border border-dashed p-4 text-center"
+                            >
+                                <span className="text-foreground text-sm font-medium">
+                                    Nog ruimte voor een collectie.
+                                </span>
+                                <span className="text-sm">Maak een collectie.</span>
+                            </button>
+                        </div>
+                    </section>
+                ) : (
+                    <section className="grid gap-3">
+                        <h2 className="text-sm font-medium">Links</h2>
+                        {resources.length === 0 ? (
+                            <p className="text-muted-foreground text-sm">
+                                {linkFilter === 'favorites'
+                                    ? 'Nog geen favorieten.'
+                                    : 'Het archief is leeg.'}
+                            </p>
+                        ) : (
+                            <ResourceList
+                                resources={resources}
+                                view={linkView}
+                                bulkActions={
+                                    linkFilter === 'archived'
+                                        ? ['restore', 'delete']
+                                        : ['favorite', 'unfavorite', 'archive', 'delete']
+                                }
+                            />
+                        )}
+                    </section>
+                )}
             </div>
         </>
     );
