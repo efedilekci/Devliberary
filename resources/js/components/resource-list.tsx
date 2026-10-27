@@ -1,4 +1,4 @@
-import { Form, usePage } from '@inertiajs/react';
+import { Form, Link, usePage } from '@inertiajs/react';
 import { Archive, ArchiveRestore, ChevronDown, ChevronUp, FolderMinus, LayoutGrid, Link2, List, Pencil, Star, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { CollectionChecks } from '@/components/collection-checks';
@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import type { LinkView } from '@/hooks/use-link-view';
+import { show as showCollection } from '@/routes/collections';
 import { destroy as detachLink, move as moveLink } from '@/routes/collections/resources';
 import { archive, bulk, destroy, favorite, update } from '@/routes/resources';
 
@@ -135,6 +136,49 @@ export function ResourceMark({ url, compact = false }: { url: string; compact?: 
     );
 }
 
+function ResourceCollections({
+    ids,
+    exceptId,
+}: {
+    ids?: string[];
+    exceptId?: string | null;
+}) {
+    const collections = usePage().props.libraryNav?.collections ?? [];
+    const byId = new Map(collections.map((collection) => [collection.id, collection]));
+    const chosen = (ids ?? []).flatMap((id) => {
+        const collection = byId.get(id);
+
+        if (collection === undefined || collection.id === exceptId) {
+            return [];
+        }
+
+        return [collection];
+    });
+
+    if (chosen.length === 0) {
+        return null;
+    }
+
+    return (
+        <ul className="mt-1 flex flex-wrap gap-x-2 gap-y-1">
+            {chosen.map((collection) => (
+                <li key={collection.id}>
+                    <Link
+                        href={showCollection(collection.id)}
+                        className="text-muted-foreground inline-flex items-center gap-1 text-xs hover:underline"
+                    >
+                        <span
+                            className="size-1.5 shrink-0 rounded-[2px]"
+                            style={{ backgroundColor: collection.accent_color }}
+                        />
+                        {collection.name}
+                    </Link>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
 function ResourceTags({ tags }: { tags?: string[] }) {
     if (!tags || tags.length === 0) {
         return null;
@@ -154,7 +198,13 @@ function ResourceTags({ tags }: { tags?: string[] }) {
     );
 }
 
-function ResourceBody({ resource }: { resource: LibraryResource }) {
+function ResourceBody({
+    resource,
+    exceptCollectionId,
+}: {
+    resource: LibraryResource;
+    exceptCollectionId?: string | null;
+}) {
     return (
         <div className="min-w-0">
             <OpenLink href={resource.url} resourceId={resource.id} className="font-medium hover:underline">
@@ -168,6 +218,7 @@ function ResourceBody({ resource }: { resource: LibraryResource }) {
                 <p className="text-muted-foreground line-clamp-1 text-sm">{resource.description}</p>
             ) : null}
             <ResourceTags tags={resource.tags} />
+            <ResourceCollections ids={resource.collection_ids} exceptId={exceptCollectionId} />
         </div>
     );
 }
@@ -690,6 +741,10 @@ export function ResourceList({
                                             </p>
                                         ) : null}
                                         <ResourceTags tags={resource.tags} />
+                                        <ResourceCollections
+                                            ids={resource.collection_ids}
+                                            exceptId={collectionId}
+                                        />
                                     </div>
                                 </div>
                                 <div className="mt-auto flex items-center justify-between gap-2">
@@ -738,7 +793,7 @@ export function ResourceList({
                                     aria-label={`Selecteer ${resource.title}`}
                                 />
                                 <ResourceMark url={resource.favicon_url} />
-                                <ResourceBody resource={resource} />
+                                <ResourceBody resource={resource} exceptCollectionId={collectionId} />
                             </div>
                             <ResourceActions
                                 resource={resource}
