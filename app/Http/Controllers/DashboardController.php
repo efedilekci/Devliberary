@@ -37,6 +37,9 @@ class DashboardController extends Controller
         $resources->search($search);
         LinkOrder::apply($resources->getQuery(), $sort);
 
+        $page = min(20, max(1, $request->integer('page')));
+        $limit = $page * 30;
+        $total = (clone $resources->getQuery())->count();
         $board = CollectionBoard::forUser($user);
 
         return Inertia::render('dashboard', [
@@ -45,9 +48,11 @@ class DashboardController extends Controller
             'linkFilter' => $linkFilter,
             'search' => $search,
             'sort' => $sort,
+            'page' => $page,
+            'hasMore' => $total > $limit && $page < 20,
             'resources' => $resources
                 ->with('collections:id')
-                ->limit(30)
+                ->limit($limit)
                 ->get(['id', 'title', 'url', 'description', 'favicon_url', 'preview_image_url', 'is_favorite', 'is_archived', 'show_on_home', 'tags', 'last_opened_at', 'created_at'])
                 ->map(fn (Resource $resource) => [
                     'id' => $resource->id,

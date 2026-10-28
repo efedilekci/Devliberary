@@ -364,4 +364,33 @@ class DashboardLibraryTest extends TestCase
                 ->where('sort', 'newest')
                 ->where('resources.0.title', 'PHP'));
     }
+
+    public function test_a_long_list_loads_another_page_without_mixing_in_other_links(): void
+    {
+        $user = User::factory()->create();
+        Resource::factory()->for($user)->count(31)->create();
+        Resource::factory()->for($user)->create(['is_archived' => true, 'title' => 'Archief']);
+        Resource::factory()->create(['title' => 'Van iemand anders']);
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['links' => 'all']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('page', 1)
+                ->where('hasMore', true)
+                ->has('resources', 30)
+                ->where('resources', function ($resources): bool {
+                    $titles = collect($resources)->pluck('title');
+
+                    return $titles->doesntContain('Archief') && $titles->doesntContain('Van iemand anders');
+                }));
+
+        $this->actingAs($user)
+            ->get(route('dashboard', ['links' => 'all', 'page' => 2]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('page', 2)
+                ->where('hasMore', false)
+                ->has('resources', 31));
+    }
 }

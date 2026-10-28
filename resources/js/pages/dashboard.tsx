@@ -1,4 +1,5 @@
 import { Head, router } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
 import {
     CollectionBoard,
     type CollectionItem,
@@ -17,6 +18,8 @@ export default function Dashboard({
     linkFilter,
     search,
     sort,
+    page,
+    hasMore,
 }: {
     collections: CollectionItem[];
     uncollected: CollectionLink[];
@@ -24,6 +27,8 @@ export default function Dashboard({
     linkFilter: 'active' | 'all' | 'favorites' | 'archived' | 'recent';
     search: string;
     sort: 'newest' | 'oldest' | 'title' | 'opened';
+    page: number;
+    hasMore: boolean;
 }) {
     const [linkView, setLinkView] = useLinkView();
     const sortOptions =
@@ -54,6 +59,25 @@ export default function Dashboard({
 
         if (next !== defaultSort) {
             params.sort = next;
+        }
+
+        router.get(dashboard.url(), params, { preserveScroll: true, preserveState: true });
+    }
+
+    function loadMore(): void {
+        const params: Record<string, string> = { page: String(page + 1) };
+        const defaultSort = linkFilter === 'recent' ? 'opened' : 'newest';
+
+        if (linkFilter !== 'active') {
+            params.links = linkFilter;
+        }
+
+        if (search !== '') {
+            params.q = search;
+        }
+
+        if (sort !== defaultSort) {
+            params.sort = sort;
         }
 
         router.get(dashboard.url(), params, { preserveScroll: true, preserveState: true });
@@ -110,6 +134,11 @@ export default function Dashboard({
                                             : ['favorite', 'unfavorite', 'archive', 'delete']
                                     }
                                 />
+                            )}
+                            {hasMore && (
+                                <Button type="button" variant="outline" onClick={loadMore}>
+                                    Meer laden
+                                </Button>
                             )}
                         </section>
                     </>
