@@ -310,19 +310,26 @@ class ResourceController extends Controller
         abort_unless($resources->count() === count($ids), 404);
 
         $action = $request->string('action')->toString();
+        $added = null;
 
-        match ($action) {
-            'favorite' => $this->updateEach($resources, ['is_favorite' => true]),
-            'unfavorite' => $this->updateEach($resources, ['is_favorite' => false]),
-            'archive' => $this->updateEach($resources, ['is_archived' => true]),
-            'restore' => $this->updateEach($resources, ['is_archived' => false]),
-            'delete' => $resources->each(fn (Resource $resource) => $resource->delete()),
-            default => abort(404),
-        };
+        if ($action === 'collect') {
+            $added = $this->fileInCollection($resources, $request->string('collection_id')->toString());
+        } else {
+            match ($action) {
+                'favorite' => $this->updateEach($resources, ['is_favorite' => true]),
+                'unfavorite' => $this->updateEach($resources, ['is_favorite' => false]),
+                'archive' => $this->updateEach($resources, ['is_archived' => true]),
+                'restore' => $this->updateEach($resources, ['is_archived' => false]),
+                'delete' => $resources->each(fn (Resource $resource) => $resource->delete()),
+                default => abort(404),
+            };
+        }
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => $this->bulkMessage($action, $resources->count()),
+            'message' => $action === 'collect'
+                ? $this->collectMessage($resources->count(), $added ?? 0)
+                : $this->bulkMessage($action, $resources->count()),
         ]);
 
         return back();
@@ -346,6 +353,38 @@ class ResourceController extends Controller
     private function updateEach(Collection $resources, array $attributes): void
     {
         $resources->each(fn (Resource $resource) => $resource->update($attributes));
+    }
+
+    /**
+     * @param  Collection<int, Resource>  $resources
+     */
+    private function fileInCollection(Collection $resources, string $collectionId): int
+    {
+        $collection = request()->user()->collections()->findOrFail($collectionId);
+        $added = 0;
+
+        foreach ($resources as $resource) {
+            if ($collection->resources()->whereKey($resource->id)->exists()) {
+                continue;
+            }
+
+            $max = $collection->resources()->max('collection_resource.position');
+            $collection->attachResource($resource, $max === null ? 0 : ((int) $max) + 1);
+            $added++;
+        }
+
+        return $added;
+    }
+
+    private function collectMessage(int $selected, int $added): string
+    {
+        if ($added === 0) {
+            return $selected === 1
+                ? 'Die link staat al in deze collectie.'
+                : 'Die links staan al in deze collectie.';
+        }
+
+        return $added === 1 ? 'Link in de collectie gezet.' : 'Links in de collectie gezet.';
     }
 
     private function bulkMessage(string $action, int $count): string

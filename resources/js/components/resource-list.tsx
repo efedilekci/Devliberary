@@ -642,6 +642,46 @@ function BulkForm({
     );
 }
 
+function BulkCollect({ ids }: { ids: string[] }) {
+    const collections = usePage().props.libraryNav?.collections ?? [];
+
+    if (collections.length === 0) {
+        return null;
+    }
+
+    return (
+        <Form {...bulk.form()} disableWhileProcessing className="flex items-center gap-2">
+            {({ processing }) => (
+                <>
+                    {ids.map((id) => (
+                        <input key={id} type="hidden" name="ids[]" value={id} />
+                    ))}
+                    <input type="hidden" name="action" value="collect" />
+                    <select
+                        name="collection_id"
+                        aria-label="Collectie"
+                        required
+                        defaultValue=""
+                        className="border-input bg-background h-8 rounded-md border px-2 text-sm"
+                    >
+                        <option value="" disabled>
+                            Collectie
+                        </option>
+                        {collections.map((collection) => (
+                            <option key={collection.id} value={collection.id}>
+                                {collection.name}
+                            </option>
+                        ))}
+                    </select>
+                    <Button type="submit" variant="outline" size="sm" disabled={processing}>
+                        In collectie zetten
+                    </Button>
+                </>
+            )}
+        </Form>
+    );
+}
+
 function BulkToolbar({
     resources,
     selected,
@@ -677,6 +717,7 @@ function BulkToolbar({
                         .map((action) => (
                             <BulkForm key={action} action={action} ids={selected} />
                         ))}
+                    {!actions.includes('restore') && <BulkCollect ids={selected} />}
                     {actions.includes('delete') && (
                         <Dialog>
                             <DialogTrigger asChild>

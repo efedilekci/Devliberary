@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Library;
 
+use App\Models\Collection;
 use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -85,5 +86,50 @@ class ResourceBulkTest extends TestCase
 
         $this->assertFalse($own->refresh()->is_archived);
         $this->assertFalse($foreign->refresh()->is_archived);
+    }
+
+    public function test_selected_links_can_be_filed_into_a_collection(): void
+    {
+        $user = User::factory()->create();
+        $laravel = Collection::factory()->for($user)->create(['name' => 'Laravel']);
+        $notes = Collection::factory()->for($user)->create(['name' => 'Notities']);
+        $docs = Resource::factory()->for($user)->create(['title' => 'Laravel docs']);
+        $php = Resource::factory()->for($user)->create(['title' => 'PHP']);
+        $laravel->attachResource($docs, 0);
+        $laravel->attachResource($php, 1);
+
+        $this->actingAs($user)
+            ->post(route('resources.bulk'), [
+                'ids' => [$docs->id, $php->id],
+                'action' => 'collect',
+                'collection_id' => $notes->id,
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(0, (int) $laravel->resources()->whereKey($docs->id)->first()->pivot->position);
+        $this->assertSame(1, (int) $laravel->resources()->whereKey($php->id)->first()->pivot->position);
+        $this->assertTrue($notes->resources()->whereKey($docs->id)->exists());
+        $this->assertTrue($notes->resources()->whereKey($php->id)->exists());
+
+        $this->actingAs($user)
+            ->post(route('resources.bulk'), [
+                'ids' => [$docs->id],
+                'action' => 'collect',
+                'collection_id' => $notes->id,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(0, (int) $notes->resources()->whereKey($docs->id)->first()->pivot->position);
+
+        $this->actingAs($user)
+            ->from(route('dashboard'))
+            ->post(route('resources.bulk'), [
+                'ids' => [$docs->id],
+                'action' => 'collect',
+                'collection_id' => Collection::factory()->create()->id,
+            ])
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHasErrors('collection_id');
     }
 }
